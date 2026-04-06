@@ -1,3 +1,4 @@
+<script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -641,11 +642,13 @@
     <div class="simple-controls">
       <div class="control-box"><label for="weekSelect">Week</label><select id="weekSelect"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option></select></div>
       <div class="control-box"><label for="weekDaySelect">Day</label><select id="weekDaySelect"><option value="1">Day 1</option><option value="2">Day 2</option><option value="3">Day 3</option><option value="4">Day 4</option><option value="5">Day 5</option><option value="6">Day 6</option><option value="7">Day 7</option></select></div>
-        <button type="button" class="apply-day-btn" id="applyDayBtn">Update Day</button>
+        <!-- Update Day button removed; dropdowns now update immediately -->
       <div class="simple-subline" id="metaLine">Current Week 1 · Day 1 · Thursday, April 2, 2026</div>
       <div class="actual-date-inline" id="actualDate">
-        <span class="date-label">Actual Date</span>
-        <span class="date-value" id="actualDateValue">Thursday, April 2, 2026</span>
+        <span class="date-label">Omer Day Date</span>
+        <span class="date-value" id="omerDayDateValue">Thursday, April 2, 2026</span>
+        <span class="date-label" style="margin-top:8px;display:block;">Today</span>
+        <span class="date-value" id="todayDateValue"></span>
       </div>
     </div>
 
@@ -785,7 +788,29 @@ function getRolloverHour() {
       return parsed;
     }
   } catch (_) {}
-  return 0;
+  // Use SunCalc to get today's sunset hour for the user's location
+  if (window.SunCalc && window._sunsetHour !== undefined) {
+    return window._sunsetHour;
+  }
+  return 19; // fallback
+// Get user's location and calculate sunset hour for today
+function setSunsetRollover() {
+  if (!window.SunCalc) return;
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const now = new Date();
+    const times = SunCalc.getTimes(now, lat, lon);
+    if (times.sunset) {
+      window._sunsetHour = times.sunset.getHours();
+    }
+  }, function() {
+    // If user denies location, fallback to 7pm
+    window._sunsetHour = 19;
+  });
+}
+
+setSunsetRollover();
 }
 
 function todayISODate() {
@@ -902,7 +927,11 @@ function switchDay(dayNum) {
   const weekNum = Math.ceil(currentDay / 7);
   const dayInWeek = ((currentDay - 1) % 7) + 1;
   document.getElementById('metaLine').textContent = 'Current Week ' + weekNum + ' · Day ' + dayInWeek + ' · ' + displayDate;
-  document.getElementById('actualDateValue').textContent = displayDate;
+  document.getElementById('omerDayDateValue').textContent = displayDate;
+  // Show today's real date and weekday
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('todayDateValue').textContent = todayStr;
 
   // selector-state week
   document.getElementById('weekSelect').value = String(weekNum);
@@ -967,24 +996,8 @@ function setupSimpleSelectors() {
     switchDay(nextDay);
   }
 
-  function queueUpdateFromWeekAndDay() {
-    if (window.requestAnimationFrame) {
-      window.requestAnimationFrame(updateFromWeekAndDay);
-      return;
-    }
-    window.setTimeout(updateFromWeekAndDay, 0);
-  }
-
-  weekSel.addEventListener('change', queueUpdateFromWeekAndDay);
-  weekSel.addEventListener('input', queueUpdateFromWeekAndDay);
-  weekSel.addEventListener('blur', queueUpdateFromWeekAndDay);
-  weekDaySel.addEventListener('change', queueUpdateFromWeekAndDay);
-  weekDaySel.addEventListener('input', queueUpdateFromWeekAndDay);
-  weekDaySel.addEventListener('blur', queueUpdateFromWeekAndDay);
-
-  if (applyBtn) {
-    applyBtn.addEventListener('click', queueUpdateFromWeekAndDay, { passive: false });
-  }
+  weekSel.addEventListener('change', updateFromWeekAndDay);
+  weekDaySel.addEventListener('change', updateFromWeekAndDay);
 }
 
 function setupScriptureToggle() {
@@ -1088,7 +1101,7 @@ function initApp() {
     var startDay = todayDay ? todayDay.day : 1;
     setupSimpleSelectors();
     setupScriptureToggle();
-    switchDay(startDay);
+    switchDay(startDay); // This will set the dropdowns to the current day
     scheduleRefresh();
   } catch (err) {
     document.getElementById('todayNum').textContent = '!';
