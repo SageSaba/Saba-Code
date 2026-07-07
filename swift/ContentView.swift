@@ -25,6 +25,41 @@ struct ContentView: View {
         NavigationStack {
             VStack(spacing: 24) {
 
+                // MARK: Microphone selection
+                Menu {
+                    ForEach(recorder.availableInputs, id: \.uid) { port in
+                        Button {
+                            recorder.selectInput(port)
+                        } label: {
+                            if port.uid == recorder.selectedInputUID {
+                                Label(port.portName, systemImage: "checkmark")
+                            } else {
+                                Text(port.portName)
+                            }
+                        }
+                    }
+                    Button {
+                        recorder.refreshAvailableInputs()
+                    } label: {
+                        Label("Refresh list", systemImage: "arrow.clockwise")
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "mic.fill")
+                        Text("Microphone: \(recorder.selectedInputName)")
+                            .lineLimit(1)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down")
+                    }
+                    .font(.title3)
+                    .padding()
+                    .frame(maxWidth: .infinity, minHeight: 54)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(14)
+                }
+                .padding(.horizontal)
+                .disabled(recorder.isRecording)
+
                 // MARK: Record button
                 Button(action: toggleRecording) {
                     VStack(spacing: 8) {
@@ -107,7 +142,10 @@ struct ContentView: View {
             }
             .padding(.top)
             .navigationTitle("Saba Remember")
-            .onAppear(perform: refreshEntries)
+            .onAppear {
+                refreshEntries()
+                recorder.refreshAvailableInputs()
+            }
         }
     }
 

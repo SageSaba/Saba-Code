@@ -19,9 +19,16 @@ final class SpeechRecorder: NSObject, ObservableObject {
     @Published var isTranscribing = false
     @Published var lastError: String?
 
+    /// All microphones currently available (built-in, AirPods/Bluetooth,
+    /// wired headset mic, external USB/Lightning mic, etc.).
+    @Published var availableInputs: [AVAudioSessionPortDescription] = []
+    /// Which one is currently selected for recording.
+    @Published var selectedInputUID: String?
+
     private var audioRecorder: AVAudioRecorder?
     private var currentFileName: String?
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+    private let selectedInputDefaultsKey = "SabaRemember.selectedMicUID"
 
     /// Folder inside the app's Documents where recordings are kept,
     /// so every entry's original audio is preserved (the "evidence layer").
@@ -40,10 +47,52 @@ final class SpeechRecorder: NSObject, ObservableObject {
         SFSpeechRecognizer.requestAuthorization { speechStatus in
             AVAudioApplication.requestRecordPermission { micGranted in
                 DispatchQueue.main.async {
+                    self.refreshAvailableInputs()
                     completion(speechStatus == .authorized && micGranted)
                 }
             }
         }
+    }
+
+    // MARK: - Microphone selection
+
+    /// Call this any time you want the mic list to reflect what's currently
+    /// plugged in / connected (e.g. when opening the mic picker, or when
+    /// headphones get plugged in or unplugged).
+    func refreshAvailableInputs() {
+        let session = AVAudioSession.sharedInstance()
+        // Session needs to be active at least once for availableInputs to
+        // reliably include Bluetooth/external mics, not just Built-In.
+        try? session.setCategory(.record, mode: .measurement, options: .allowBluetooth)
+        try? session.setActive(true)
+
+        availableInputs = session.availableInputs ?? []
+
+        // Restore the last choice if it's still connected, otherwise fall
+        // back to whatever the system currently prefers.
+        if let savedUID = UserDefaults.standard.string(forKey: selectedInputDefaultsKey),
+           let match = availableInputs.first(where: { $0.uid == savedUID }) {
+            selectInput(match)
+        } else {
+            selectedInputUID = session.preferredInput?.uid
+        }
+    }
+
+    /// Switch to a specific microphone (built-in, AirPods, wired headset,
+    /// external USB/Lightning mic, etc.) and remember the choice.
+    func selectInput(_ port: AVAudioSessionPortDescription) {
+        do {
+            try AVAudioSession.sharedInstance().setPreferredInput(port)
+            selectedInputUID = port.uid
+            UserDefaults.standard.set(port.uid, forKey: selectedInputDefaultsKey)
+        } catch {
+            lastError = "Couldn't switch microphone: \(error.localizedDescription)"
+        }
+    }
+
+    /// Friendly name for the currently selected mic, for display in the UI.
+    var selectedInputName: String {
+        availableInputs.first(where: { $0.uid == selectedInputUID })?.portName ?? "Default Microphone"
     }
 
     // MARK: - Recording
@@ -51,8 +100,14 @@ final class SpeechRecorder: NSObject, ObservableObject {
     func startRecording() {
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+            try session.setCategory(.record, mode: .measurement, options: .allowBluetooth)
             try session.setActive(true)
+            // Re-apply the chosen mic in case the system reset it when the
+            // session was reconfigured.
+            if let uid = selectedInputUID,
+               let port = session.availableInputs?.first(where: { $0.uid == uid }) {
+                try? session.setPreferredInput(port)
+            }
         } catch {
             lastError = "Audio session error: \(error.localizedDescription)"
             return
