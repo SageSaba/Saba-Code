@@ -26,6 +26,24 @@ struct ContentView: View {
             VStack(spacing: 24) {
 
                 // MARK: Microphone selection
+                // On Mac, which mic is used is controlled by macOS itself
+                // (System Settings > Sound > Input) — so instead of an
+                // in-app switcher that wouldn't really do anything there,
+                // just show what's currently being used.
+                #if targetEnvironment(macCatalyst)
+                HStack {
+                    Image(systemName: "mic.fill")
+                    Text("Using your Mac's current input device (set in System Settings > Sound)")
+                        .lineLimit(2)
+                    Spacer()
+                }
+                .font(.title3)
+                .padding()
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(14)
+                .padding(.horizontal)
+                #else
                 Menu {
                     ForEach(recorder.availableInputs, id: \.uid) { port in
                         Button {
@@ -59,6 +77,7 @@ struct ContentView: View {
                 }
                 .padding(.horizontal)
                 .disabled(recorder.isRecording)
+                #endif
 
                 // MARK: Record button
                 Button(action: toggleRecording) {
