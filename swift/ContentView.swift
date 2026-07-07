@@ -150,6 +150,14 @@ struct ContentView: View {
                         }
                         .buttonStyle(.bordered)
 
+                        Button(action: clearText) {
+                            Label("Clear", systemImage: "xmark.circle")
+                                .font(.title3)
+                                .frame(maxWidth: .infinity, minHeight: 54)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(pastedText.isEmpty)
+
                         Button(action: saveTypedText) {
                             Label("Save", systemImage: "tray.and.arrow.down.fill")
                                 .font(.title3)
@@ -248,6 +256,15 @@ struct ContentView: View {
             pendingSource = "text"
             pendingAudioFileName = nil
         }
+    }
+
+    /// Wipes the review box without saving anything — for when a recording
+    /// or paste didn't come out right and you just want to start over.
+    private func clearText() {
+        pastedText = ""
+        pendingSource = "text"
+        pendingAudioFileName = nil
+        statusMessage = ""
     }
 
     /// Copies the current box text and opens the chosen AI's website.
