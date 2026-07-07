@@ -44,8 +44,11 @@ final class SpeechRecorder: NSObject, ObservableObject {
     // MARK: - Permissions
 
     func requestPermissions(completion: @escaping (Bool) -> Void) {
+        // Using the AVAudioSession-based permission call (rather than the
+        // newer AVAudioApplication one) so this same code works reliably
+        // on iPhone, iPad, AND Mac (via Mac Catalyst).
         SFSpeechRecognizer.requestAuthorization { speechStatus in
-            AVAudioApplication.requestRecordPermission { micGranted in
+            AVAudioSession.sharedInstance().requestRecordPermission { micGranted in
                 DispatchQueue.main.async {
                     self.refreshAvailableInputs()
                     completion(speechStatus == .authorized && micGranted)

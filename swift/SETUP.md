@@ -1,9 +1,9 @@
 # Saba Remember — Setup Guide
 
-This turns the files in this folder into a real app on your iPad.
-You need a Mac with Xcode installed (free from the App Store) to do this —
-I can't build or test the app myself since that requires Xcode, which only
-runs on a Mac.
+This turns the files in this folder into a real app on your iPad, iPhone,
+and Mac. You need a Mac with Xcode installed (free from the App Store) to
+do this — I can't build or test the app myself since that requires Xcode,
+which only runs on a Mac.
 
 Big picture: five short steps, do them in order.
 
@@ -17,6 +17,11 @@ Big picture: five short steps, do them in order.
 5. Interface: SwiftUI. Language: Swift.
 6. Save it anywhere you like (NOT inside this Saba Code folder — pick a
    simple location like your Desktop, a new folder).
+7. To also run this on your Mac (not just iPad/iPhone): after creating the
+   project, click the blue project icon at the top of the left sidebar,
+   click your target under "TARGETS," and in "Supported Destinations"
+   click the + and add "Mac." (Older Xcode versions call this
+   "Mac (Designed for iPad)" — same idea, just check that box instead.)
 
 
 ## Step 2 — Remove the files Xcode made for you
@@ -55,19 +60,38 @@ Do NOT add `main.swift` or `SETUP.md` — those aren't part of the app.
      Value: `Used to record voice memories.`
    - Key: `Privacy - Speech Recognition Usage Description`
      Value: `Used to turn your voice into text.`
+4. If you added the Mac destination in Step 1: click the "Signing &
+   Capabilities" tab (next to Info), click "+ Capability," and add
+   "Audio Input." Without this, the Mac version can't use the microphone
+   at all (this checkbox isn't needed for iPad/iPhone, only Mac).
 
 
-## Step 5 — Run it on your iPad
+## Step 5 — Run it on your iPad, iPhone, or Mac
 
-1. Connect your iPad to the Mac with a cable (or make sure both are on
+**For iPad or iPhone:**
+1. Connect the device to the Mac with a cable (or make sure both are on
    the same Wi-Fi for wireless install).
 2. At the top of Xcode, click the device dropdown (it might say
-   "iPhone 15" or similar) and pick your iPad's name instead.
+   "iPhone 15" or similar) and pick your device's name instead.
 3. Click the big Play button (▶) at the top left.
-4. First time only: on the iPad, go to Settings > General > VPN & Device
+4. First time only: on the device, go to Settings > General > VPN & Device
    Management, and trust your Apple ID / developer certificate.
 5. The app should open. Tap Record, say something, tap Stop — it should
    show up in the list below a few seconds later. Try Paste + Save too.
+
+**For Mac:**
+1. At the top of Xcode, click the device dropdown and choose "My Mac."
+2. Click the big Play button (▶). The app opens as a regular Mac window.
+3. First time, macOS will ask to allow microphone and speech recognition —
+   click Allow on both.
+4. One difference on Mac: which physical microphone gets used is normally
+   controlled by macOS itself (System Settings > Sound > Input), not by
+   an app. The in-app microphone picker was built and tested with
+   iPad/iPhone in mind — on Mac it may simply follow whatever mic is set
+   as the system default rather than switching directly. Recording,
+   transcribing, pasting, and read-aloud all work the same either way; if
+   the in-app picker doesn't switch mics on Mac when we test it, that's
+   the expected reason and we can adjust it together.
 
 That's it — no App Store, no cost (a free Apple ID is enough for
 installing on your own device; it just needs re-installing from Xcode
