@@ -172,18 +172,23 @@ struct ContentView: View {
                     // free way for an outside app to drop text straight into
                     // any of these chats, so you paste it in yourself once
                     // it opens (Cmd+V, or long-press > Paste).
-                    Menu {
+                    // One big button per destination — easier to hit than a
+                    // dropdown, and you can see all four at once.
+                    Text("Send to:")
+                        .font(.title3).bold()
+
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ForEach(aiDestinations, id: \.name) { destination in
-                            Button(destination.name) {
+                            Button {
                                 sendText(to: destination)
+                            } label: {
+                                Text(destination.name)
+                                    .font(.title3).bold()
+                                    .frame(maxWidth: .infinity, minHeight: 64)
                             }
+                            .buttonStyle(.borderedProminent)
                         }
-                    } label: {
-                        Label("Send to…", systemImage: "paperplane.fill")
-                            .font(.title3)
-                            .frame(maxWidth: .infinity, minHeight: 54)
                     }
-                    .buttonStyle(.bordered)
                     .disabled(pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .padding(.horizontal)
