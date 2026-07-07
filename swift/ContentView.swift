@@ -27,6 +27,15 @@ struct ContentView: View {
     @State private var pendingSource: String = "text"
     @State private var pendingAudioFileName: String?
 
+    /// The AI chat sites the "Send to…" menu offers. Add more here later by
+    /// just adding another (name, urlString) pair.
+    private let aiDestinations: [(name: String, urlString: String)] = [
+        ("ChatGPT", "https://chatgpt.com"),
+        ("Claude", "https://claude.ai"),
+        ("Gemini", "https://gemini.google.com"),
+        ("Grok", "https://grok.com"),
+    ]
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
@@ -149,6 +158,25 @@ struct ContentView: View {
                         .buttonStyle(.borderedProminent)
                         .disabled(pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
+
+                    // MARK: Send to an AI chat
+                    // Copies the text and opens the chosen site — there's no
+                    // free way for an outside app to drop text straight into
+                    // any of these chats, so you paste it in yourself once
+                    // it opens (Cmd+V, or long-press > Paste).
+                    Menu {
+                        ForEach(aiDestinations, id: \.name) { destination in
+                            Button(destination.name) {
+                                sendText(to: destination)
+                            }
+                        }
+                    } label: {
+                        Label("Send to…", systemImage: "paperplane.fill")
+                            .font(.title3)
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .padding(.horizontal)
 
@@ -220,6 +248,21 @@ struct ContentView: View {
             pendingSource = "text"
             pendingAudioFileName = nil
         }
+    }
+
+    /// Copies the current box text and opens the chosen AI's website.
+    /// There's no free, official way to hand text straight into ChatGPT,
+    /// Claude, Gemini, or Grok from another app — so this gets you as close
+    /// as possible: the text is already on your clipboard the moment the
+    /// site opens, ready to paste (Cmd+V, or long-press > Paste).
+    private func sendText(to destination: (name: String, urlString: String)) {
+        let text = pastedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        UIPasteboard.general.string = text
+        if let url = URL(string: destination.urlString) {
+            UIApplication.shared.open(url)
+        }
+        statusMessage = "Copied — paste it into \(destination.name) once it opens."
     }
 
     private func saveTypedText() {
