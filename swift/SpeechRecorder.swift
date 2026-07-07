@@ -19,10 +19,15 @@ final class SpeechRecorder: NSObject, ObservableObject {
     @Published var isTranscribing = false
     @Published var lastError: String?
 
+    #if !targetEnvironment(macCatalyst)
     /// All microphones currently available (built-in, AirPods/Bluetooth,
     /// wired headset mic, external USB/Lightning mic, etc.).
+    /// Not available on Mac: Apple doesn't expose this port-list API under
+    /// Mac Catalyst, since Mac audio input is chosen system-wide instead
+    /// (System Settings > Sound > Input) rather than per-app.
     @Published var availableInputs: [AVAudioSessionPortDescription] = []
-    /// Which one is currently selected for recording.
+    #endif
+    /// Which one is currently selected for recording (iPad/iPhone only).
     @Published var selectedInputUID: String?
 
     private var audioRecorder: AVAudioRecorder?
@@ -58,6 +63,15 @@ final class SpeechRecorder: NSObject, ObservableObject {
     }
 
     // MARK: - Microphone selection
+    //
+    // The port-list APIs used here (AVAudioSessionPortDescription and
+    // friends) aren't available on Mac, even via Mac Catalyst — Apple only
+    // built them for iPhone/iPad. On Mac, which mic gets used is controlled
+    // by macOS itself (System Settings > Sound > Input), so there's simply
+    // nothing for this app to do there. The #if below compiles a real
+    // picker on iPhone/iPad and a harmless no-op version on Mac.
+
+    #if !targetEnvironment(macCatalyst)
 
     /// Call this any time you want the mic list to reflect what's currently
     /// plugged in / connected (e.g. when opening the mic picker, or when
@@ -98,6 +112,19 @@ final class SpeechRecorder: NSObject, ObservableObject {
         availableInputs.first(where: { $0.uid == selectedInputUID })?.portName ?? "Default Microphone"
     }
 
+    #else
+
+    /// On Mac there's no per-app mic list to refresh — nothing to do.
+    func refreshAvailableInputs() {
+        try? AVAudioSession.sharedInstance().setCategory(.record, mode: .measurement)
+        try? AVAudioSession.sharedInstance().setActive(true)
+    }
+
+    /// On Mac, always the system's current default input.
+    var selectedInputName: String { "your Mac's system default microphone" }
+
+    #endif
+
     // MARK: - Recording
 
     func startRecording() {
@@ -105,12 +132,15 @@ final class SpeechRecorder: NSObject, ObservableObject {
         do {
             try session.setCategory(.record, mode: .measurement, options: .allowBluetooth)
             try session.setActive(true)
+            #if !targetEnvironment(macCatalyst)
             // Re-apply the chosen mic in case the system reset it when the
-            // session was reconfigured.
+            // session was reconfigured. (Mac has no per-app mic list, so
+            // this step is iPhone/iPad only.)
             if let uid = selectedInputUID,
                let port = session.availableInputs?.first(where: { $0.uid == uid }) {
                 try? session.setPreferredInput(port)
             }
+            #endif
         } catch {
             lastError = "Audio session error: \(error.localizedDescription)"
             return
