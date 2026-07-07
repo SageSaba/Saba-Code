@@ -3,8 +3,10 @@
 //  Saba Remember
 //
 //  Big-button, big-text interface designed for easy tapping and reading:
-//    1. One large Record button — speak, it transcribes automatically.
-//    2. A paste-in text box — paste or type, then Save.
+//    1. One large Record button — speak, it transcribes and drops the
+//       result into the editable box below so you can fix anything wrong
+//       before it's saved.
+//    2. That same box also takes pasted or typed text directly.
 //    3. A list of everything you've saved, with a Read Aloud button on each.
 //
 
@@ -20,6 +22,10 @@ struct ContentView: View {
     @State private var entries: [MemoryEntry] = []
     @State private var pastedText: String = ""
     @State private var statusMessage: String = ""
+    // Tracks where the text currently in the box came from, so Save can
+    // still tag/link it correctly even after you've edited it by hand.
+    @State private var pendingSource: String = "text"
+    @State private var pendingAudioFileName: String?
 
     var body: some View {
         NavigationStack {
@@ -105,15 +111,25 @@ struct ContentView: View {
                         .foregroundColor(.secondary)
                 }
 
-                // MARK: Paste / type text box
+                // MARK: Editable review box — shows what was just said or
+                // pasted, and lets you fix anything before it's saved.
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Or paste / type text")
+                    Text("What was captured (edit if needed)")
                         .font(.title3).bold()
 
                     TextEditor(text: $pastedText)
                         .font(.title3)
                         .frame(minHeight: 100)
                         .padding(8)
+                        .onChange(of: pastedText) { newValue in
+                            // If the box gets fully cleared by hand, forget
+                            // any leftover voice/audio link so a fresh typed
+                            // entry doesn't get mistakenly tagged as voice.
+                            if newValue.isEmpty {
+                                pendingSource = "text"
+                                pendingAudioFileName = nil
+                            }
+                        }
                         .background(Color(.secondarySystemBackground))
                         .cornerRadius(12)
 
@@ -175,9 +191,13 @@ struct ContentView: View {
             statusMessage = ""
             recorder.stopRecording { text, audioFileName in
                 if !text.isEmpty {
-                    store.save(content: text, source: "voice", audioPath: audioFileName)
-                    statusMessage = "Saved: \(text)"
-                    refreshEntries()
+                    // Put it in the editable box instead of saving right
+                    // away, so a misheard word can be fixed before it's
+                    // committed. The original recording stays linked either way.
+                    pastedText = text
+                    pendingSource = "voice"
+                    pendingAudioFileName = audioFileName
+                    statusMessage = "Review below, then tap Save."
                 } else {
                     statusMessage = recorder.lastError ?? "Didn't catch that — try again."
                 }
@@ -197,14 +217,18 @@ struct ContentView: View {
     private func pasteFromClipboard() {
         if let clip = UIPasteboard.general.string {
             pastedText = clip
+            pendingSource = "text"
+            pendingAudioFileName = nil
         }
     }
 
     private func saveTypedText() {
         let text = pastedText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        store.save(content: text, source: "text", audioPath: nil)
+        store.save(content: text, source: pendingSource, audioPath: pendingAudioFileName)
         pastedText = ""
+        pendingSource = "text"
+        pendingAudioFileName = nil
         statusMessage = "Saved."
         refreshEntries()
     }
