@@ -27,6 +27,16 @@ struct ContentView: View {
     @State private var pendingSource: String = "text"
     @State private var pendingAudioFileName: String?
 
+    // Big, hard-to-miss "it actually saved" banner — shown only after the
+    // database confirms the row was written, not just when Save is tapped.
+    @State private var showSavedBanner: Bool = false
+
+    // Search + date filter for the entry list below.
+    @State private var searchText: String = ""
+    @State private var useDateFilter: Bool = false
+    @State private var filterStartDate: Date = Date()
+    @State private var filterEndDate: Date = Date()
+
     /// The AI chat sites the "Send to…" menu offers. Add more here later by
     /// just adding another (name, urlString) pair.
     private let aiDestinations: [(name: String, urlString: String)] = [
@@ -109,15 +119,39 @@ struct ContentView: View {
                 }
                 .padding(.horizontal)
 
+                // "Prove it" button — reads straight from the database, not
+                // from anything still sitting in on-screen memory, so a
+                // successful answer here really means it was stored.
+                Button(action: playLatest) {
+                    Label("What did I just say?", systemImage: "ear.badge.waveform")
+                        .font(.title3).bold()
+                        .frame(maxWidth: .infinity, minHeight: 54)
+                }
+                .buttonStyle(.bordered)
+                .padding(.horizontal)
+
                 if recorder.isTranscribing {
                     ProgressView("Transcribing…")
                         .font(.title3)
+                }
+
+                if showSavedBanner {
+                    Label("Saved — confirmed in database", systemImage: "checkmark.circle.fill")
+                        .font(.title3).bold()
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.green)
+                        .cornerRadius(14)
+                        .padding(.horizontal)
+                        .transition(.opacity)
                 }
 
                 if !statusMessage.isEmpty {
                     Text(statusMessage)
                         .font(.headline)
                         .foregroundColor(.secondary)
+                        .padding(.horizontal)
                 }
 
                 // MARK: Editable review box — shows what was just said or
@@ -190,6 +224,41 @@ struct ContentView: View {
                         }
                     }
                     .disabled(pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .padding(.horizontal)
+
+                // MARK: Search + date filter
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                        TextField("Search saved memories", text: $searchText)
+                            .font(.title3)
+                            .onChange(of: searchText) { _ in refreshEntries() }
+                    }
+                    .padding()
+                    .frame(minHeight: 54)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
+
+                    Toggle("Filter by date", isOn: $useDateFilter)
+                        .font(.title3)
+                        .onChange(of: useDateFilter) { _ in refreshEntries() }
+
+                    if useDateFilter {
+                        DatePicker("From", selection: $filterStartDate, displayedComponents: .date)
+                            .font(.title3)
+                            .onChange(of: filterStartDate) { _ in refreshEntries() }
+                        DatePicker("To", selection: $filterEndDate, displayedComponents: .date)
+                            .font(.title3)
+                            .onChange(of: filterEndDate) { _ in refreshEntries() }
+                    }
+
+                    ShareLink(items: exportURLs()) {
+                        Label("Export memories (database + audio)", systemImage: "square.and.arrow.up")
+                            .font(.title3)
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                    }
+                    .buttonStyle(.bordered)
                 }
                 .padding(.horizontal)
 
@@ -290,12 +359,37 @@ struct ContentView: View {
     private func saveTypedText() {
         let text = pastedText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        store.save(content: text, source: pendingSource, audioPath: pendingAudioFileName)
-        pastedText = ""
-        pendingSource = "text"
-        pendingAudioFileName = nil
-        statusMessage = "Saved."
-        refreshEntries()
+
+        // Ask the database itself whether the row went in — never claim
+        // "Saved" on faith alone.
+        let didSave = store.save(content: text, source: pendingSource, audioPath: pendingAudioFileName)
+
+        if didSave {
+            pastedText = ""
+            pendingSource = "text"
+            pendingAudioFileName = nil
+            statusMessage = ""
+            refreshEntries()
+
+            withAnimation { showSavedBanner = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation { showSavedBanner = false }
+            }
+        } else {
+            statusMessage = "⚠️ Save did not go through — please try again."
+        }
+    }
+
+    /// Reads straight from the database (not from on-screen state) so a
+    /// successful result here is real proof the memory was stored and can
+    /// be retrieved later — the whole point of this button.
+    private func playLatest() {
+        guard let latest = store.fetchLatest() else {
+            statusMessage = "Nothing saved yet."
+            return
+        }
+        statusMessage = "Last saved (\(latest.timestamp)): \(latest.content)"
+        readAloud(latest.content)
     }
 
     private func readAloud(_ text: String) {
@@ -305,7 +399,29 @@ struct ContentView: View {
     }
 
     private func refreshEntries() {
-        entries = store.fetchRecent()
+        if searchText.isEmpty && !useDateFilter {
+            entries = store.fetchRecent()
+        } else {
+            entries = store.search(
+                query: searchText,
+                startDate: useDateFilter ? filterStartDate : nil,
+                endDate: useDateFilter ? filterEndDate : nil
+            )
+        }
+    }
+
+    /// Every file worth getting out of the app's private sandbox: the
+    /// database itself, plus every recorded audio clip. Handed to a native
+    /// ShareLink so you can save them to Files, iCloud Drive, AirDrop them
+    /// to your Mac, etc.
+    private func exportURLs() -> [URL] {
+        var urls: [URL] = [store.dbURL]
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let audioFolder = docs.appendingPathComponent("Audio", isDirectory: true)
+        if let files = try? FileManager.default.contentsOfDirectory(at: audioFolder, includingPropertiesForKeys: nil) {
+            urls.append(contentsOf: files)
+        }
+        return urls
     }
 }
 

@@ -74,10 +74,16 @@ final class MemoryStore {
 
     /// Save a new memory entry. `source` is "voice" or "text".
     /// `audioPath` is the filename of the linked audio recording, if any.
-    func save(content: String, source: String, audioPath: String?) {
+    /// Returns true only if the row actually made it into the database —
+    /// callers should check this before telling the user it was saved.
+    @discardableResult
+    func save(content: String, source: String, audioPath: String?) -> Bool {
         let sql = "INSERT INTO memories (timestamp, content, source, audio_path) VALUES (?, ?, ?, ?);"
         var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return }
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            print("Insert prepare failed: \(String(cString: sqlite3_errmsg(db)))")
+            return false
+        }
         defer { sqlite3_finalize(stmt) }
 
         let formatter = DateFormatter()
@@ -92,7 +98,14 @@ final class MemoryStore {
         } else {
             sqlite3_bind_null(stmt, 4)
         }
-        sqlite3_step(stmt)
+
+        guard sqlite3_step(stmt) == SQLITE_DONE else {
+            print("Insert failed: \(String(cString: sqlite3_errmsg(db)))")
+            return false
+        }
+        // Confirm the row is really there (not just that SQLite said OK) —
+        // belt-and-suspenders so "Saved" is never shown for a phantom write.
+        return sqlite3_changes(db) > 0
     }
 
     /// Fetch the most recent entries, newest first.
@@ -104,6 +117,56 @@ final class MemoryStore {
         defer { sqlite3_finalize(stmt) }
 
         sqlite3_bind_int(stmt, 1, Int32(limit))
+
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let id = Int(sqlite3_column_int(stmt, 0))
+            let ts = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
+            let content = sqlite3_column_text(stmt, 2).map { String(cString: $0) } ?? ""
+            let source = sqlite3_column_text(stmt, 3).map { String(cString: $0) } ?? "text"
+            let audioPath = sqlite3_column_text(stmt, 4).map { String(cString: $0) }
+            results.append(MemoryEntry(id: id, timestamp: ts, content: content, source: source, audioPath: audioPath))
+        }
+        return results
+    }
+
+    /// The single most recent entry, if any — used for "What did I just say?"
+    /// so that button proves a real round-trip to the database, not just
+    /// whatever happens to still be sitting in on-screen state.
+    func fetchLatest() -> MemoryEntry? {
+        fetchRecent(limit: 1).first
+    }
+
+    /// Search saved memories by text and/or a date range (inclusive).
+    /// Pass an empty query and nil dates to get everything, newest first.
+    func search(query: String, startDate: Date?, endDate: Date?, limit: Int = 200) -> [MemoryEntry] {
+        var sql = "SELECT id, timestamp, content, source, audio_path FROM memories WHERE 1=1"
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedQuery.isEmpty { sql += " AND content LIKE ?" }
+        if startDate != nil { sql += " AND substr(timestamp,1,10) >= ?" }
+        if endDate != nil { sql += " AND substr(timestamp,1,10) <= ?" }
+        sql += " ORDER BY id DESC LIMIT ?;"
+
+        var stmt: OpaquePointer?
+        var results: [MemoryEntry] = []
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return results }
+        defer { sqlite3_finalize(stmt) }
+
+        var idx: Int32 = 1
+        if !trimmedQuery.isEmpty {
+            sqlite3_bind_text(stmt, idx, "%\(trimmedQuery)%", -1, SQLITE_TRANSIENT_TYPE)
+            idx += 1
+        }
+        let dayFormatter = DateFormatter()
+        dayFormatter.dateFormat = "yyyy-MM-dd"
+        if let startDate = startDate {
+            sqlite3_bind_text(stmt, idx, dayFormatter.string(from: startDate), -1, SQLITE_TRANSIENT_TYPE)
+            idx += 1
+        }
+        if let endDate = endDate {
+            sqlite3_bind_text(stmt, idx, dayFormatter.string(from: endDate), -1, SQLITE_TRANSIENT_TYPE)
+            idx += 1
+        }
+        sqlite3_bind_int(stmt, idx, Int32(limit))
 
         while sqlite3_step(stmt) == SQLITE_ROW {
             let id = Int(sqlite3_column_int(stmt, 0))
