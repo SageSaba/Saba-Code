@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archive Viewer</title>
+<style>
+  :root {
+    --bg: #f3f3f0; --panel: #ffffff; --field: #eae9e5; --ink: #1d1d1f;
+    --ink-2: #6f6f74; --line: #d8d7d3; --accent: #2456c8; --accent-soft: #e3ebfb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161617; --panel: #222224; --field: #2d2d30; --ink: #f0f0f2;
+      --ink-2: #a0a0a6; --line: #3a3a3e; --accent: #6f9bff; --accent-soft: #24314f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 8px 10px 20px;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px; line-height: 1.45;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+
+  /* voice / search box */
+  .voice-box {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px; display: flex; gap: 8px; align-items: center;
+  }
+  .mic-btn {
+    flex: none; width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: var(--accent); color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mic-btn.live { background: #c8322b; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+  .mic-btn.live svg { animation: pulse 1.1s infinite; }
+  @media (prefers-reduced-motion: reduce) { .mic-btn.live svg { animation: none; } }
+  #q {
+    flex: 1; min-height: 36px; background: var(--field); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 10px; font: inherit; color: var(--ink);
+  }
+  #searchBtn {
+    border: none; background: var(--accent); color: #fff; font: inherit; font-weight: 600;
+    border-radius: 8px; min-height: 36px; padding: 0 16px; cursor: pointer;
+  }
+  button:focus-visible, .row:focus-visible, #q:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .split { display: grid; grid-template-columns: minmax(320px, 5fr) minmax(340px, 7fr); gap: 8px; align-items: start; }
+  @media (max-width: 780px) { .split { grid-template-columns: 1fr; } .video-panel { order: -1; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .panel-head {
+    padding: 6px 10px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .panel-head .count { color: var(--ink-2); font-weight: 400; }
+
+  .rows { max-height: calc(100vh - 150px); overflow-y: auto; }
+  .row {
+    display: grid; grid-template-columns: 60px 1fr; gap: 8px; width: 100%; text-align: left;
+    padding: 5px 10px; border: none; border-bottom: 1px solid var(--line);
+    background: transparent; color: var(--ink); font: inherit; cursor: pointer; line-height: 1.35;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: var(--field); }
+  .row.selected { background: var(--accent-soft); }
+  .row .t { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; }
+  .row .meta { font-size: 11px; color: var(--ink-2); margin-top: 1px; }
+  .row .txt em { font-style: normal; background: var(--accent-soft); border-radius: 3px; padding: 0 2px; }
+  .row.selected .txt em { background: var(--panel); }
+  .empty { padding: 14px; color: var(--ink-2); }
+
+  video { display: block; width: 100%; aspect-ratio: 16/9; background: #000; }
+  .svc-line { padding: 5px 10px; font-size: 12px; color: var(--ink-2); border-bottom: 1px solid var(--line); }
+
+  /* the whole service transcript — about 5 lines tall, click any line to jump */
+  .context { max-height: 120px; overflow-y: auto; border-bottom: 1px solid var(--line); }
+  .ctx-line {
+    display: grid; grid-template-columns: 56px 1fr; gap: 8px; width: 100%;
+    text-align: left; padding: 3px 10px; border: none; background: transparent;
+    color: var(--ink); font: inherit; font-size: 13px; line-height: 1.35; cursor: pointer;
+  }
+  .ctx-line:hover { background: var(--field); }
+  .ctx-line.here { background: var(--accent-soft); font-weight: 600; }
+  .ctx-line .t { font-variant-numeric: tabular-nums; color: var(--accent); }
+  .ctx-line .who { color: var(--ink-2); font-size: 11px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; align-items: center; justify-content: center; }
+  .controls button {
+    font: inherit; font-size: 12px; font-weight: 600; border: 1px solid var(--line);
+    background: var(--field); color: var(--ink); border-radius: 8px; min-height: 36px;
+    padding: 0 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .controls .play { background: var(--accent); border-color: var(--accent); color: #fff; min-width: 84px; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="voice-box">
+    <button class="mic-btn" id="micBtn" aria-label="Voice search" title="Speak your search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg>
+    </button>
+    <input id="q" type="text" placeholder="Speak or type what you're looking for — e.g. waiting upon God" autofocus>
+    <button id="searchBtn">Search</button>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="panel-head">
+        <span>Time sequence</span>
+        <span class="count" id="hitCount">—</span>
+      </div>
+      <div class="rows" id="rows"><div class="empty">Search above — every moment it was said appears here.</div></div>
+    </div>
+
+    <div class="panel video-panel">
+      <video id="video" controls preload="none"></video>
+      <div class="svc-line" id="svcLine">No service loaded yet — select a moment on the left.</div>
+      <div class="context" id="ctx" hidden></div>
+      <div class="controls">
+        <button id="back15m">« 15 min</button>
+        <button id="back5m">« 5 min</button>
+        <button id="back5">« 5 sec</button>
+        <button class="play" id="playBtn">Play</button>
+        <button id="fwd5">5 sec »</button>
+        <button id="fwd5m">5 min »</button>
+        <button id="fwd15m">15 min »</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const q = document.getElementById("q");
+  const rowsEl = document.getElementById("rows");
+  const hitCount = document.getElementById("hitCount");
+  const video = document.getElementById("video");
+  const svcLine = document.getElementById("svcLine");
+  const playBtn = document.getElementById("playBtn");
+  let currentServiceId = null;
+
+  const esc = s => s.replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+  const fmt = s => {
+    s = Math.max(0, Math.round(s));
+    const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+    const mm = String(m).padStart(2, "0"), ss = String(sec).padStart(2, "0");
+    return h ? h + ":" + mm + ":" + ss : mm + ":" + ss;
+  };
+  const highlight = (text, query) => {
+    const safe = esc(text);
+    const pat = query.trim().split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+");
+    try { return safe.replace(new RegExp("(" + pat + ")", "ig"), "<em>$1</em>"); }
+    catch { return safe; }
+  };
+
+  async function runSearch() {
+    const query = q.value.trim();
+    if (query.length < 2) return;
+    hitCount.textContent = "searching…";
+    rowsEl.innerHTML = "";
+    let data;
+    try {
+      const res = await fetch("/api/search?q=" + encodeURIComponent(query));
+      data = await res.json();
+    } catch {
+      hitCount.textContent = "";
+      rowsEl.innerHTML = '<div class="empty">Could not reach the server — is viewer.py still running?</div>';
+      return;
+    }
+    const hits = data.hits || [];
+    hitCount.textContent = data.explain
+      ? data.explain
+      : hits.length + (hits.length === 500 ? "+ moments" : " moments");
+    if (!hits.length) {
+      rowsEl.innerHTML = '<div class="empty">Nothing found for “' + esc(query) + '”.</div>';
+      return;
+    }
+    for (const h of hits) {
+      const b = document.createElement("button");
+      b.className = "row";
+      b.innerHTML =
+        '<span class="t">' + fmt(h.start) + '</span>' +
+        '<span><span class="txt">' + highlight(h.text, query) + '</span>' +
+        '<div class="meta">' + esc(h.date) + (h.title ? " · " + esc(h.title) : "") +
+        (h.speaker ? " · " + esc(h.speaker) : "") + (h.has_video ? "" : " · (no video file)") + "</div></span>";
+      b.addEventListener("click", () => selectHit(b, h));
+      rowsEl.appendChild(b);
+    }
+  }
+
+  const ctxEl = document.getElementById("ctx");
+  let ctxLines = [];       // [{start, el}] in time order, for follow-along
+  let userScrolledAt = 0;  // pause auto-follow briefly after a manual scroll
+  ctxEl.addEventListener("wheel", () => userScrolledAt = Date.now());
+  ctxEl.addEventListener("touchmove", () => userScrolledAt = Date.now());
+
+  async function showContext(h) {
+    try {
+      const res = await fetch("/api/context?service_id=" + h.service_id + "&t=" + h.start);
+      const data = await res.json();
+      ctxEl.innerHTML = "";
+      ctxLines = [];
+      for (const line of (data.lines || [])) {
+        const b = document.createElement("button");
+        b.className = "ctx-line";
+        b.innerHTML = '<span class="t">' + fmt(line.start) + '</span><span>' + esc(line.text) +
+          (line.speaker ? ' <span class="who">— ' + esc(line.speaker) + '</span>' : "") + '</span>';
+        b.addEventListener("click", () => {
+          video.currentTime = Math.max(0, line.start - 1);
+          video.play();
+        });
+        ctxEl.appendChild(b);
+        ctxLines.push({ start: line.start, el: b });
+      }
+      ctxEl.hidden = !ctxEl.children.length;
+      followVideo(h.start, true);
+    } catch { ctxEl.hidden = true; ctxLines = []; }
+  }
+
+  // Highlight the line being spoken and keep it in view as the video plays.
+  function followVideo(t, force) {
+    if (!ctxLines.length) return;
+    let lo = 0, hi = ctxLines.length - 1, idx = 0;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (ctxLines[mid].start <= t + 0.3) { idx = mid; lo = mid + 1; } else { hi = mid - 1; }
+    }
+    const el = ctxLines[idx].el;
+    if (!el.classList.contains("here")) {
+      ctxEl.querySelectorAll(".here").forEach(x => x.classList.remove("here"));
+      el.classList.add("here");
+    }
+    if (force || Date.now() - userScrolledAt > 4000) el.scrollIntoView({ block: "center" });
+  }
+  video.addEventListener("timeupdate", () => followVideo(video.currentTime, false));
+
+  function selectHit(rowBtn, h) {
+    document.querySelectorAll(".row.selected").forEach(r => r.classList.remove("selected"));
+    rowBtn.classList.add("selected");
+    svcLine.textContent = h.date + (h.title ? " — " + h.title : "") + "  ·  jumping to " + fmt(h.start);
+    if (!h.has_video) { svcLine.textContent = h.date + " — no video file on the drive for this service."; return; }
+    showContext(h);
+    const seekTo = Math.max(0, h.start - 1); // land a breath before the words
+    if (currentServiceId !== h.service_id) {
+      currentServiceId = h.service_id;
+      video.src = "/video/" + h.service_id;
+      video.addEventListener("loadedmetadata", () => { video.currentTime = seekTo; video.play(); }, { once: true });
+      video.load();
+    } else {
+      video.currentTime = seekTo;
+      video.play();
+    }
+  }
+
+  video.addEventListener("play", () => playBtn.textContent = "Pause");
+  video.addEventListener("pause", () => playBtn.textContent = "Play");
+  playBtn.addEventListener("click", () => video.paused ? video.play() : video.pause());
+  const skip = s => { video.currentTime = Math.max(0, video.currentTime + s); };
+  document.getElementById("back15m").addEventListener("click", () => skip(-900));
+  document.getElementById("back5m").addEventListener("click", () => skip(-300));
+  document.getElementById("back5").addEventListener("click", () => skip(-5));
+  document.getElementById("fwd5").addEventListener("click", () => skip(5));
+  document.getElementById("fwd5m").addEventListener("click", () => skip(300));
+  document.getElementById("fwd15m").addEventListener("click", () => skip(900));
+
+  document.getElementById("searchBtn").addEventListener("click", runSearch);
+  q.addEventListener("keydown", e => { if (e.key === "Enter") runSearch(); });
+
+  // Arriving with ?q=... in the address runs the search immediately.
+  const preset = new URLSearchParams(location.search).get("q");
+  if (preset) { q.value = preset; runSearch(); }
+
+  // Voice input — uses the browser's built-in speech recognition when available.
+  const micBtn = document.getElementById("micBtn");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    const rec = new SR();
+    rec.lang = "en-US";
+    rec.interimResults = true;
+    let live = false;
+    rec.onresult = e => {
+      q.value = Array.from(e.results).map(r => r[0].transcript).join(" ").trim();
+    };
+    rec.onend = () => {
+      micBtn.classList.remove("live");
+      live = false;
+      if (q.value.trim().length >= 2) runSearch();
+    };
+    micBtn.addEventListener("click", () => {
+      if (live) { rec.stop(); return; }
+      live = true;
+      micBtn.classList.add("live");
+      q.value = "";
+      rec.start();
+    });
+  } else {
+    micBtn.addEventListener("click", () => {
+      q.focus();
+      svcLine.textContent = "This browser has no built-in speech input — use Mac dictation (fn fn) in the box, or type.";
+    });
+  }
+</script>
+</body>
+</html>
