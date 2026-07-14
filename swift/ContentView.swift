@@ -32,11 +32,13 @@ struct ContentView: View {
     @State private var autoStopWorkItem: DispatchWorkItem?
 
     @AppStorage("SabaRememberWindowWidth") private var savedWindowWidth: Double = 760
-    @AppStorage("SabaRememberWindowHeight") private var savedWindowHeight: Double = 300
     @State private var showLastFivePicker = false
 
     private var preferredWindowWidth: Double { max(savedWindowWidth, 520) }
-    private var preferredWindowHeight: Double { max(savedWindowHeight, 160) }
+
+    // The window is a fixed-height bar: title bar + button strip + status line.
+    // Width is remembered and resizable; height is pinned.
+    private var barHeight: Double { 122 + Double(titleBarClearance) }
 
     // On the Mac the window's title bar (close/minimize buttons + "Saba Remember")
     // sits on top of the content, so the button row needs room below it.
@@ -90,10 +92,9 @@ struct ContentView: View {
             .padding(.horizontal, 10)
             .padding(.top, titleBarClearance)
         }
-        .frame(minWidth: preferredWindowWidth, minHeight: preferredWindowHeight)
-        .background(WindowSizeAccessor(initialSize: CGSize(width: preferredWindowWidth, height: preferredWindowHeight)) { size in
+        .frame(minWidth: 520, minHeight: barHeight, maxHeight: barHeight)
+        .background(WindowSizeAccessor(initialSize: CGSize(width: preferredWindowWidth, height: barHeight)) { size in
             savedWindowWidth = size.width
-            savedWindowHeight = size.height
         })
         .sheet(isPresented: $showLastFivePicker) {
             lastFiveChooser
@@ -402,6 +403,12 @@ private struct UIKitWindowSizeAccessor: UIViewControllerRepresentable {
         DispatchQueue.main.async {
             guard let window = uiViewController.view.window else { return }
 
+            // Pin the window height to the bar; only the width can be resized.
+            if let restrictions = window.windowScene?.sizeRestrictions {
+                restrictions.minimumSize = CGSize(width: 520, height: initialSize.height)
+                restrictions.maximumSize = CGSize(width: 4000, height: initialSize.height)
+            }
+
             if !context.coordinator.didSetInitialSize {
                 context.coordinator.didSetInitialSize = true
                 var frame = window.frame
@@ -444,6 +451,10 @@ private struct AppKitWindowSizeAccessor: NSViewControllerRepresentable {
     func updateNSViewController(_ nsViewController: NSViewController, context: Context) {
         DispatchQueue.main.async {
             guard let window = nsViewController.view.window else { return }
+
+            // Pin the window height to the bar; only the width can be resized.
+            window.contentMinSize = NSSize(width: 520, height: initialSize.height)
+            window.contentMaxSize = NSSize(width: 4000, height: initialSize.height)
 
             if !context.coordinator.didSetInitialSize {
                 context.coordinator.didSetInitialSize = true
