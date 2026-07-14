@@ -311,20 +311,20 @@ private struct UIKitWindowSizeAccessor: UIViewControllerRepresentable {
         DispatchQueue.main.async {
             guard let window = uiViewController.view.window else { return }
 
-            // Pin the window height to the bar; only the width can be resized.
-            if let restrictions = window.windowScene?.sizeRestrictions {
-                restrictions.minimumSize = CGSize(width: 240, height: initialSize.height)
-                restrictions.maximumSize = CGSize(width: 4000, height: initialSize.height)
-            }
-
             if !context.coordinator.didSetInitialSize {
                 context.coordinator.didSetInitialSize = true
-                var frame = window.frame
-                frame.size = initialSize
-                if let scene = uiViewController.view.window?.windowScene {
-                    scene.title = scene.title // keep scene alive
+                // Setting the frame directly is ignored on the Mac; size limits are
+                // the only request it honors. Clamp the window to exactly the bar
+                // size, then a moment later relax the width so it stays resizable.
+                // Height remains pinned forever.
+                if let restrictions = window.windowScene?.sizeRestrictions {
+                    restrictions.minimumSize = initialSize
+                    restrictions.maximumSize = initialSize
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        restrictions.minimumSize = CGSize(width: 240, height: initialSize.height)
+                        restrictions.maximumSize = CGSize(width: 4000, height: initialSize.height)
+                    }
                 }
-                window.rootViewController?.view.window?.frame = frame
             }
 
             let newSize = window.bounds.size
