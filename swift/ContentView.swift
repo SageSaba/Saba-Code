@@ -37,6 +37,19 @@ struct ContentView: View {
 
     private var preferredWindowWidth: Double { max(savedWindowWidth, 520) }
     private var preferredWindowHeight: Double { max(savedWindowHeight, 300) }
+
+    // On the Mac the window's title bar (close/minimize buttons + "Saba Remember")
+    // sits on top of the content, so the button row needs room below it.
+    // On iPad/iPhone there is no title bar and no extra space is added.
+    private var titleBarClearance: CGFloat {
+        #if targetEnvironment(macCatalyst)
+        return 38
+        #elseif canImport(UIKit)
+        return ProcessInfo.processInfo.isiOSAppOnMac ? 38 : 0
+        #else
+        return 0
+        #endif
+    }
     @State private var lastFiveSelection = 0
 
     private var recentFiveEntries: [MemoryEntry] {
@@ -174,6 +187,7 @@ struct ContentView: View {
                 .padding(.bottom, 10)
             }
             .padding(.horizontal, 10)
+            .padding(.top, titleBarClearance)
         }
         .frame(minWidth: preferredWindowWidth, minHeight: preferredWindowHeight)
         .background(WindowSizeAccessor(initialSize: CGSize(width: preferredWindowWidth, height: preferredWindowHeight)) { size in
