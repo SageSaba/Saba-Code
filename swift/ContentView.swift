@@ -69,7 +69,6 @@ struct ContentView: View {
                     actionButton(title: "Last 5", icon: "list.bullet.clipboard", action: openLastFivePicker, shortcut: "l")
                     actionButton(title: "Copy", icon: "doc.on.doc", action: copyCaptured, shortcut: "c")
                     actionButton(title: "Paste", icon: "arrow.up.doc", action: pasteFromClipboard, shortcut: "v")
-                    actionButton(title: "Clear", icon: "xmark.circle", action: clearText, shortcut: "x")
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity)
@@ -287,13 +286,6 @@ struct ContentView: View {
 
         saveCapturedText(text, source: "text", audioPath: nil, auto: true)
         statusMessage = "Pasted and saved to mymemory.db."
-    }
-
-    private func clearText() {
-        pastedText = ""
-        pendingSource = "text"
-        pendingAudioFileName = nil
-        statusMessage = "Screen cleared. The pending text is gone." 
     }
 
     private func stopRecording() {
