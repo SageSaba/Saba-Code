@@ -22,7 +22,6 @@ struct ContentView: View {
     private let store = MemoryStore()
     private let synthesizer = AVSpeechSynthesizer()
 
-    @State private var entries: [MemoryEntry] = []
     @State private var pastedText: String = ""
     @State private var statusMessage: String = ""
     @State private var pendingSource: String = "text"
@@ -32,13 +31,12 @@ struct ContentView: View {
     @State private var autoStopWorkItem: DispatchWorkItem?
 
     @AppStorage("SabaRememberWindowWidth") private var savedWindowWidth: Double = 760
-    @State private var showLastFivePicker = false
 
-    private var preferredWindowWidth: Double { max(savedWindowWidth, 520) }
+    private var preferredWindowWidth: Double { max(savedWindowWidth, 240) }
 
     // The window is a fixed-height bar: title bar + button strip + status line.
     // Width is remembered and resizable; height is pinned.
-    private var barHeight: Double { 122 + Double(titleBarClearance) }
+    private var barHeight: Double { 88 + Double(titleBarClearance) }
 
     // On the Mac the window's title bar (close/minimize buttons + "Saba Remember")
     // sits on top of the content, so the button row needs room below it.
@@ -52,11 +50,6 @@ struct ContentView: View {
         return 0
         #endif
     }
-    @State private var lastFiveSelection = 0
-
-    private var recentFiveEntries: [MemoryEntry] {
-        Array(entries.prefix(5))
-    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -66,7 +59,6 @@ struct ContentView: View {
             VStack(spacing: 8) {
                 HStack(spacing: 10) {
                     recordButton
-                    actionButton(title: "Last 5", icon: "list.bullet.clipboard", action: openLastFivePicker, shortcut: "l")
                     actionButton(title: "Copy", icon: "doc.on.doc", action: copyCaptured, shortcut: "c")
                     actionButton(title: "Paste", icon: "arrow.up.doc", action: pasteFromClipboard, shortcut: "v")
                     Spacer(minLength: 0)
@@ -76,8 +68,6 @@ struct ContentView: View {
                 .padding(.horizontal, 8)
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                .frame(minWidth: 520, minHeight: 86)
-                .padding(.bottom, 8)
 
                 if !statusMessage.isEmpty {
                     Text(statusMessage)
@@ -91,69 +81,12 @@ struct ContentView: View {
             .padding(.horizontal, 10)
             .padding(.top, titleBarClearance)
         }
-        .frame(minWidth: 520, minHeight: barHeight, maxHeight: barHeight)
+        .frame(minWidth: 240, minHeight: barHeight, maxHeight: barHeight)
         .background(WindowSizeAccessor(initialSize: CGSize(width: preferredWindowWidth, height: barHeight)) { size in
             savedWindowWidth = size.width
         })
-        .sheet(isPresented: $showLastFivePicker) {
-            lastFiveChooser
-        }
         .onAppear {
-            refreshEntries()
             recorder.refreshAvailableInputs()
-        }
-    }
-
-    private var lastFiveChooser: some View {
-        VStack(spacing: 14) {
-            Text("Last 5")
-                .font(.headline.bold())
-
-            if recentFiveEntries.isEmpty {
-                Text("Nothing saved yet")
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 20)
-            } else {
-                VStack(spacing: 8) {
-                    ForEach(Array(recentFiveEntries.enumerated()), id: \.element.id) { index, entry in
-                        Button {
-                            applySelectedEntry(entry)
-                        } label: {
-                            HStack(alignment: .top, spacing: 8) {
-                                Text("\(index + 1)")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(index == lastFiveSelection ? .white : .secondary)
-                                    .frame(width: 20)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(entry.timestamp)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    Text(entry.content)
-                                        .font(.subheadline)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.leading)
-                                }
-                                Spacer()
-                            }
-                            .padding(10)
-                            .background(index == lastFiveSelection ? Color.blue.opacity(0.9) : Color(.secondarySystemBackground))
-                            .foregroundStyle(index == lastFiveSelection ? .white : .primary)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 4)
-            }
-
-            Text("Use ↑ ↓ and Return")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding()
-        .frame(minWidth: 320, maxHeight: 320)
-        .onAppear {
-            lastFiveSelection = 0
         }
     }
 
@@ -255,7 +188,6 @@ struct ContentView: View {
         }
 
         lastSavedContent = text
-        refreshEntries()
 
         withAnimation {
             showSavedBanner = true
@@ -309,19 +241,6 @@ struct ContentView: View {
         }
     }
 
-    private func openLastFivePicker() {
-        refreshEntries()
-        showLastFivePicker = true
-    }
-
-    private func applySelectedEntry(_ entry: MemoryEntry) {
-        pastedText = entry.content
-        pendingSource = "text"
-        pendingAudioFileName = nil
-        statusMessage = "Loaded: \(entry.content)"
-        showLastFivePicker = false
-    }
-
     private func playLatest() {
         guard let latest = store.fetchLatest() else {
             statusMessage = "Nothing has been approved yet."
@@ -336,9 +255,6 @@ struct ContentView: View {
         synthesizer.speak(utterance)
     }
 
-    private func refreshEntries() {
-        entries = store.fetchRecent()
-    }
 }
 
 private struct BlinkingRecordingDot: View {
@@ -397,7 +313,7 @@ private struct UIKitWindowSizeAccessor: UIViewControllerRepresentable {
 
             // Pin the window height to the bar; only the width can be resized.
             if let restrictions = window.windowScene?.sizeRestrictions {
-                restrictions.minimumSize = CGSize(width: 520, height: initialSize.height)
+                restrictions.minimumSize = CGSize(width: 240, height: initialSize.height)
                 restrictions.maximumSize = CGSize(width: 4000, height: initialSize.height)
             }
 
@@ -445,7 +361,7 @@ private struct AppKitWindowSizeAccessor: NSViewControllerRepresentable {
             guard let window = nsViewController.view.window else { return }
 
             // Pin the window height to the bar; only the width can be resized.
-            window.contentMinSize = NSSize(width: 520, height: initialSize.height)
+            window.contentMinSize = NSSize(width: 240, height: initialSize.height)
             window.contentMaxSize = NSSize(width: 4000, height: initialSize.height)
 
             if !context.coordinator.didSetInitialSize {
