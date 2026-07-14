@@ -66,8 +66,7 @@ struct ContentView: View {
                     recordButton
                     actionButton(title: "Last 5", icon: "list.bullet.clipboard", action: openLastFivePicker, shortcut: "l")
                     actionButton(title: "Copy", icon: "doc.on.doc", action: copyCaptured, shortcut: "c")
-                    actionButton(title: "Paste", icon: "arrow.up.doc", action: pasteFromClipboard, shortcut: "p")
-                    actionButton(title: "Save", icon: "tray.and.arrow.down.fill", action: approveAndSave, shortcut: "d")
+                    actionButton(title: "Paste", icon: "arrow.up.doc", action: pasteFromClipboard, shortcut: "v")
                     actionButton(title: "Clear", icon: "xmark.circle", action: clearText, shortcut: "x")
                     Spacer(minLength: 0)
                 }
@@ -271,14 +270,16 @@ struct ContentView: View {
         Button(action: recorder.isRecording ? stopRecording : startRecording) {
             ZStack {
                 Circle()
-                    .fill(recorder.isRecording ? Color.red : Color(.systemGray4))
+                    .fill(Color(.systemGray4))
                     .frame(width: 42, height: 42)
-                    .scaleEffect(recorder.isRecording ? 1.1 : 1.0)
-                    .animation(recorder.isRecording ? .easeInOut(duration: 0.75).repeatForever(autoreverses: true) : .default, value: recorder.isRecording)
 
-                Image(systemName: recorder.isRecording ? "stop.fill" : "mic.fill")
-                    .font(.title2)
-                    .foregroundColor(recorder.isRecording ? .white : .primary)
+                if recorder.isRecording {
+                    BlinkingRecordingDot()
+                } else {
+                    Image(systemName: "mic.fill")
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                }
             }
         }
         .buttonStyle(.plain)
@@ -370,10 +371,19 @@ struct ContentView: View {
     }
 
     private func pasteFromClipboard() {
-        pastedText = UIPasteboard.general.string ?? ""
+        let text = (UIPasteboard.general.string ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        pastedText = text
         pendingSource = "text"
         pendingAudioFileName = nil
-        statusMessage = "Pasted from clipboard."
+
+        guard !text.isEmpty else {
+            statusMessage = "Clipboard is empty."
+            return
+        }
+
+        saveCapturedText(text, source: "text", audioPath: nil, auto: true)
+        statusMessage = "Pasted and saved to mymemory.db."
     }
 
     private func clearText() {
@@ -381,38 +391,6 @@ struct ContentView: View {
         pendingSource = "text"
         pendingAudioFileName = nil
         statusMessage = "Screen cleared. The pending text is gone." 
-    }
-
-    private func approveAndSave() {
-        let text = pastedText.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
-        guard !text.isEmpty else { return }
-
-        let didSave = store.save(
-            content: text,
-            source: pendingSource,
-            audioPath: pendingAudioFileName
-        )
-
-        if didSave {
-            refreshEntries()
-
-            withAnimation {
-                showSavedBanner = true
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                withAnimation {
-                    showSavedBanner = false
-                }
-            }
-
-            statusMessage =
-                "Approved text is now in mymemory.db."
-        } else {
-            statusMessage = "Save to mymemory.db failed."
-        }
     }
 
     private func stopRecording() {
@@ -431,6 +409,7 @@ struct ContentView: View {
                 pendingAudioFileName = audioFileName
                 copyToClipboard(cleaned)
                 saveCapturedText(cleaned, source: "voice", audioPath: audioFileName, auto: true)
+                statusMessage = "Voice copied — ready to be pasted ⌘V."
             }
         }
     }
@@ -464,6 +443,22 @@ struct ContentView: View {
 
     private func refreshEntries() {
         entries = store.fetchRecent()
+    }
+}
+
+private struct BlinkingRecordingDot: View {
+    @State private var dimmed = false
+
+    var body: some View {
+        Circle()
+            .fill(Color.red)
+            .frame(width: 18, height: 18)
+            .opacity(dimmed ? 0.15 : 1.0)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                    dimmed = true
+                }
+            }
     }
 }
 
