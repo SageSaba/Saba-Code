@@ -36,7 +36,7 @@ struct ContentView: View {
     @State private var showLastFivePicker = false
 
     private var preferredWindowWidth: Double { max(savedWindowWidth, 520) }
-    private var preferredWindowHeight: Double { max(savedWindowHeight, 300) }
+    private var preferredWindowHeight: Double { max(savedWindowHeight, 160) }
 
     // On the Mac the window's title bar (close/minimize buttons + "Saba Remember")
     // sits on top of the content, so the button row needs room below it.
@@ -86,104 +86,6 @@ struct ContentView: View {
                         .padding(.bottom, 4)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Pending text")
-                        .font(.subheadline.bold())
-                        .padding(.horizontal, 12)
-                        .padding(.top, 8)
-
-                    ZStack(alignment: .topLeading) {
-                        TextEditor(text: $pastedText)
-                            .padding(12)
-                            .frame(minHeight: 120)
-                            .background(Color.white.opacity(0.9))
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                            )
-
-                        if pastedText.isEmpty {
-                            Text("Your captured text appears here. Record, paste, or type to save.")
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 18)
-                                .padding(.leading, 18)
-                                .allowsHitTesting(false)
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                }
-                .background(Color.white.opacity(0.14))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .padding(.bottom, 10)
-
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        Text("Database preview")
-                            .font(.subheadline.bold())
-                        Spacer()
-                        Text("Latest saved values")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 10)
-
-                    if entries.isEmpty {
-                        Text("No saved memory rows yet.")
-                            .foregroundStyle(.secondary)
-                            .padding(10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.white.opacity(0.7))
-                            .cornerRadius(14)
-                            .padding(.horizontal, 12)
-                    } else {
-                        ScrollView(.vertical, showsIndicators: true) {
-                            VStack(spacing: 6) {
-                                ForEach(entries.prefix(10)) { entry in
-                                    HStack(spacing: 8) {
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(entry.timestamp)
-                                                .font(.caption2)
-                                                .foregroundStyle(.secondary)
-                                                .lineLimit(1)
-                                                .textSelection(.enabled)
-                                            Text(entry.content)
-                                                .font(.caption)
-                                                .lineLimit(1)
-                                                .truncationMode(.tail)
-                                                .textSelection(.enabled)
-                                        }
-                                        Spacer()
-                                        Text(entry.source.capitalized)
-                                            .font(.caption2.bold())
-                                            .foregroundColor(.blue)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.blue.opacity(0.12))
-                                            .clipShape(Capsule())
-                                    }
-                                    .padding(10)
-                                    .background(Color.white.opacity(0.85))
-                                    .cornerRadius(14)
-                                    .shadow(color: Color.black.opacity(0.02), radius: 1, x: 0, y: 1)
-                                    .contextMenu {
-                                        Button("Copy text") {
-                                            copyToClipboard(entry.content)
-                                        }
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 8)
-                        }
-                        .frame(maxHeight: 220)
-                    }
-                }
-                .background(Color.white.opacity(0.18))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .padding(.horizontal, 4)
-                .padding(.bottom, 10)
             }
             .padding(.horizontal, 10)
             .padding(.top, titleBarClearance)
