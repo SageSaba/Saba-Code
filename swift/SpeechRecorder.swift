@@ -130,7 +130,11 @@ final class SpeechRecorder: NSObject, ObservableObject {
     func startRecording() {
         let session = AVAudioSession.sharedInstance()
         do {
+            #if targetEnvironment(macCatalyst)
+            try session.setCategory(.record, mode: .measurement)
+            #else
             try session.setCategory(.record, mode: .measurement, options: .allowBluetooth)
+            #endif
             try session.setActive(true)
             #if !targetEnvironment(macCatalyst)
             // Re-apply the chosen mic in case the system reset it when the

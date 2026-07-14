@@ -2,426 +2,565 @@
 //  ContentView.swift
 //  Saba Remember
 //
-//  Big-button, big-text interface designed for easy tapping and reading:
-//    1. One large Record button — speak, it transcribes and drops the
-//       result into the editable box below so you can fix anything wrong
-//       before it's saved.
-//    2. That same box also takes pasted or typed text directly.
-//    3. A list of everything you've saved, with a Read Aloud button on each.
+//  Stage 1:
+//  Record -> Stop -> Transcribe -> approve and save to mymemory.db.
+//  No raw JSON capture storage is used.
 //
 
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
 import AVFoundation
 
 struct ContentView: View {
 
     @StateObject private var recorder = SpeechRecorder()
+
     private let store = MemoryStore()
     private let synthesizer = AVSpeechSynthesizer()
 
     @State private var entries: [MemoryEntry] = []
     @State private var pastedText: String = ""
     @State private var statusMessage: String = ""
-    // Tracks where the text currently in the box came from, so Save can
-    // still tag/link it correctly even after you've edited it by hand.
     @State private var pendingSource: String = "text"
     @State private var pendingAudioFileName: String?
+    @State private var showSavedBanner = false
+    @State private var lastSavedContent: String?
+    @State private var autoStopWorkItem: DispatchWorkItem?
 
-    // Big, hard-to-miss "it actually saved" banner — shown only after the
-    // database confirms the row was written, not just when Save is tapped.
-    @State private var showSavedBanner: Bool = false
+    @AppStorage("SabaRememberWindowWidth") private var savedWindowWidth: Double = 760
+    @AppStorage("SabaRememberWindowHeight") private var savedWindowHeight: Double = 300
+    @State private var showLastFivePicker = false
 
-    // Search + date filter for the entry list below.
-    @State private var searchText: String = ""
-    @State private var useDateFilter: Bool = false
-    @State private var filterStartDate: Date = Date()
-    @State private var filterEndDate: Date = Date()
+    private var preferredWindowWidth: Double { max(savedWindowWidth, 520) }
+    private var preferredWindowHeight: Double { max(savedWindowHeight, 300) }
+    @State private var lastFiveSelection = 0
 
-    /// The AI chat sites the "Send to…" menu offers. Add more here later by
-    /// just adding another (name, urlString) pair.
-    private let aiDestinations: [(name: String, urlString: String)] = [
-        ("ChatGPT", "https://chatgpt.com"),
-        ("Claude", "https://claude.ai"),
-        ("Gemini", "https://gemini.google.com"),
-        ("Grok", "https://grok.com"),
-    ]
+    private var recentFiveEntries: [MemoryEntry] {
+        Array(entries.prefix(5))
+    }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
+        ZStack(alignment: .top) {
+            Color(red: 0.88, green: 0.75, blue: 0.89)
+                .ignoresSafeArea()
 
-                // MARK: Microphone selection
-                // On Mac, which mic is used is controlled by macOS itself
-                // (System Settings > Sound > Input) — so instead of an
-                // in-app switcher that wouldn't really do anything there,
-                // just show what's currently being used.
-                #if targetEnvironment(macCatalyst)
-                HStack {
-                    Image(systemName: "mic.fill")
-                    Text("Using your Mac's current input device (set in System Settings > Sound)")
-                        .lineLimit(2)
-                    Spacer()
+            VStack(spacing: 8) {
+                HStack(spacing: 10) {
+                    recordButton
+                    actionButton(title: "Last 5", icon: "list.bullet.clipboard", action: openLastFivePicker, shortcut: "l")
+                    actionButton(title: "Copy", icon: "doc.on.doc", action: copyCaptured, shortcut: "c")
+                    actionButton(title: "Paste", icon: "arrow.up.doc", action: pasteFromClipboard, shortcut: "p")
+                    actionButton(title: "Save", icon: "tray.and.arrow.down.fill", action: approveAndSave, shortcut: "d")
+                    actionButton(title: "Clear", icon: "xmark.circle", action: clearText, shortcut: "x")
+                    Spacer(minLength: 0)
                 }
-                .font(.title3)
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 54)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(14)
-                .padding(.horizontal)
-                #else
-                Menu {
-                    ForEach(recorder.availableInputs, id: \.uid) { port in
-                        Button {
-                            recorder.selectInput(port)
-                        } label: {
-                            if port.uid == recorder.selectedInputUID {
-                                Label(port.portName, systemImage: "checkmark")
-                            } else {
-                                Text(port.portName)
-                            }
-                        }
-                    }
-                    Button {
-                        recorder.refreshAvailableInputs()
-                    } label: {
-                        Label("Refresh list", systemImage: "arrow.clockwise")
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "mic.fill")
-                        Text("Microphone: \(recorder.selectedInputName)")
-                            .lineLimit(1)
-                        Spacer()
-                        Image(systemName: "chevron.up.chevron.down")
-                    }
-                    .font(.title3)
-                    .padding()
-                    .frame(maxWidth: .infinity, minHeight: 54)
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(14)
-                }
-                .padding(.horizontal)
-                .disabled(recorder.isRecording)
-                #endif
-
-                // MARK: Record button
-                Button(action: toggleRecording) {
-                    VStack(spacing: 8) {
-                        Image(systemName: recorder.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                            .font(.system(size: 64))
-                        Text(recorder.isRecording ? "Stop" : "Record")
-                            .font(.title2).bold()
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 140)
-                    .foregroundColor(.white)
-                    .background(recorder.isRecording ? Color.red : Color.blue)
-                    .cornerRadius(20)
-                }
-                .padding(.horizontal)
-
-                // "Prove it" button — reads straight from the database, not
-                // from anything still sitting in on-screen memory, so a
-                // successful answer here really means it was stored.
-                Button(action: playLatest) {
-                    Label("What did I just say?", systemImage: "ear.badge.waveform")
-                        .font(.title3).bold()
-                        .frame(maxWidth: .infinity, minHeight: 54)
-                }
-                .buttonStyle(.bordered)
-                .padding(.horizontal)
-
-                if recorder.isTranscribing {
-                    ProgressView("Transcribing…")
-                        .font(.title3)
-                }
-
-                if showSavedBanner {
-                    Label("Saved — confirmed in database", systemImage: "checkmark.circle.fill")
-                        .font(.title3).bold()
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.green)
-                        .cornerRadius(14)
-                        .padding(.horizontal)
-                        .transition(.opacity)
-                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .frame(minWidth: 520, minHeight: 86)
+                .padding(.bottom, 8)
 
                 if !statusMessage.isEmpty {
                     Text(statusMessage)
-                        .font(.headline)
+                        .font(.caption)
                         .foregroundColor(.secondary)
-                        .padding(.horizontal)
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 4)
                 }
 
-                // MARK: Editable review box — shows what was just said or
-                // pasted, and lets you fix anything before it's saved.
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("What was captured (edit if needed)")
-                        .font(.title3).bold()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Pending text")
+                        .font(.subheadline.bold())
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
 
-                    TextEditor(text: $pastedText)
-                        .font(.title3)
-                        .frame(minHeight: 100)
-                        .padding(8)
-                        .onChange(of: pastedText) { newValue in
-                            // If the box gets fully cleared by hand, forget
-                            // any leftover voice/audio link so a fresh typed
-                            // entry doesn't get mistakenly tagged as voice.
-                            if newValue.isEmpty {
-                                pendingSource = "text"
-                                pendingAudioFileName = nil
-                            }
-                        }
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
+                    ZStack(alignment: .topLeading) {
+                        TextEditor(text: $pastedText)
+                            .padding(12)
+                            .frame(minHeight: 120)
+                            .background(Color.white.opacity(0.9))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                            )
 
-                    HStack(spacing: 16) {
-                        Button(action: pasteFromClipboard) {
-                            Label("Paste", systemImage: "doc.on.clipboard")
-                                .font(.title3)
-                                .frame(maxWidth: .infinity, minHeight: 54)
-                        }
-                        .buttonStyle(.bordered)
-
-                        Button(action: clearText) {
-                            Label("Clear", systemImage: "xmark.circle")
-                                .font(.title3)
-                                .frame(maxWidth: .infinity, minHeight: 54)
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(pastedText.isEmpty)
-
-                        Button(action: saveTypedText) {
-                            Label("Save", systemImage: "tray.and.arrow.down.fill")
-                                .font(.title3)
-                                .frame(maxWidth: .infinity, minHeight: 54)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-
-                    // MARK: Send to an AI chat
-                    // Copies the text and opens the chosen site — there's no
-                    // free way for an outside app to drop text straight into
-                    // any of these chats, so you paste it in yourself once
-                    // it opens (Cmd+V, or long-press > Paste).
-                    // One big button per destination — easier to hit than a
-                    // dropdown, and you can see all four at once.
-                    Text("Send to:")
-                        .font(.title3).bold()
-
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        ForEach(aiDestinations, id: \.name) { destination in
-                            Button {
-                                sendText(to: destination)
-                            } label: {
-                                Text(destination.name)
-                                    .font(.title3).bold()
-                                    .frame(maxWidth: .infinity, minHeight: 64)
-                            }
-                            .buttonStyle(.borderedProminent)
+                        if pastedText.isEmpty {
+                            Text("Your captured text appears here. Record, paste, or type to save.")
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 18)
+                                .padding(.leading, 18)
+                                .allowsHitTesting(false)
                         }
                     }
-                    .disabled(pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .padding(.horizontal, 12)
                 }
-                .padding(.horizontal)
+                .background(Color.white.opacity(0.14))
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .padding(.bottom, 10)
 
-                // MARK: Search + date filter
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 0) {
                     HStack {
-                        Image(systemName: "magnifyingglass")
-                        TextField("Search saved memories", text: $searchText)
-                            .font(.title3)
-                            .onChange(of: searchText) { _ in refreshEntries() }
-                    }
-                    .padding()
-                    .frame(minHeight: 54)
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(12)
-
-                    Toggle("Filter by date", isOn: $useDateFilter)
-                        .font(.title3)
-                        .onChange(of: useDateFilter) { _ in refreshEntries() }
-
-                    if useDateFilter {
-                        DatePicker("From", selection: $filterStartDate, displayedComponents: .date)
-                            .font(.title3)
-                            .onChange(of: filterStartDate) { _ in refreshEntries() }
-                        DatePicker("To", selection: $filterEndDate, displayedComponents: .date)
-                            .font(.title3)
-                            .onChange(of: filterEndDate) { _ in refreshEntries() }
-                    }
-
-                    ShareLink(items: exportURLs()) {
-                        Label("Export memories (database + audio)", systemImage: "square.and.arrow.up")
-                            .font(.title3)
-                            .frame(maxWidth: .infinity, minHeight: 54)
-                    }
-                    .buttonStyle(.bordered)
-                }
-                .padding(.horizontal)
-
-                // MARK: Entry list
-                List(entries) { entry in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(entry.timestamp)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Text(entry.content)
-                                .font(.body)
-                                .lineLimit(3)
-                        }
+                        Text("Database preview")
+                            .font(.subheadline.bold())
                         Spacer()
-                        Button(action: { readAloud(entry.content) }) {
-                            Image(systemName: "speaker.wave.2.fill")
-                                .font(.title2)
-                                .frame(width: 54, height: 54)
-                        }
-                        .buttonStyle(.borderless)
+                        Text("Latest saved values")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 10)
+
+                    if entries.isEmpty {
+                        Text("No saved memory rows yet.")
+                            .foregroundStyle(.secondary)
+                            .padding(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.white.opacity(0.7))
+                            .cornerRadius(14)
+                            .padding(.horizontal, 12)
+                    } else {
+                        ScrollView(.vertical, showsIndicators: true) {
+                            VStack(spacing: 6) {
+                                ForEach(entries.prefix(10)) { entry in
+                                    HStack(spacing: 8) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(entry.timestamp)
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                                .textSelection(.enabled)
+                                            Text(entry.content)
+                                                .font(.caption)
+                                                .lineLimit(1)
+                                                .truncationMode(.tail)
+                                                .textSelection(.enabled)
+                                        }
+                                        Spacer()
+                                        Text(entry.source.capitalized)
+                                            .font(.caption2.bold())
+                                            .foregroundColor(.blue)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.blue.opacity(0.12))
+                                            .clipShape(Capsule())
+                                    }
+                                    .padding(10)
+                                    .background(Color.white.opacity(0.85))
+                                    .cornerRadius(14)
+                                    .shadow(color: Color.black.opacity(0.02), radius: 1, x: 0, y: 1)
+                                    .contextMenu {
+                                        Button("Copy text") {
+                                            copyToClipboard(entry.content)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 8)
+                        }
+                        .frame(maxHeight: 220)
+                    }
                 }
-                .listStyle(.plain)
+                .background(Color.white.opacity(0.18))
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .padding(.horizontal, 4)
+                .padding(.bottom, 10)
             }
-            .padding(.top)
-            .navigationTitle("Saba Remember")
-            .onAppear {
-                refreshEntries()
-                recorder.refreshAvailableInputs()
+            .padding(.horizontal, 10)
+        }
+        .frame(minWidth: preferredWindowWidth, minHeight: preferredWindowHeight)
+        .background(WindowSizeAccessor(initialSize: CGSize(width: preferredWindowWidth, height: preferredWindowHeight)) { size in
+            savedWindowWidth = size.width
+            savedWindowHeight = size.height
+        })
+        .sheet(isPresented: $showLastFivePicker) {
+            lastFiveChooser
+        }
+        .onAppear {
+            refreshEntries()
+            recorder.refreshAvailableInputs()
+        }
+    }
+
+    private var lastFiveChooser: some View {
+        VStack(spacing: 14) {
+            Text("Last 5")
+                .font(.headline.bold())
+
+            if recentFiveEntries.isEmpty {
+                Text("Nothing saved yet")
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 20)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(Array(recentFiveEntries.enumerated()), id: \.element.id) { index, entry in
+                        Button {
+                            applySelectedEntry(entry)
+                        } label: {
+                            HStack(alignment: .top, spacing: 8) {
+                                Text("\(index + 1)")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(index == lastFiveSelection ? .white : .secondary)
+                                    .frame(width: 20)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(entry.timestamp)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(entry.content)
+                                        .font(.subheadline)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                Spacer()
+                            }
+                            .padding(10)
+                            .background(index == lastFiveSelection ? Color.blue.opacity(0.9) : Color(.secondarySystemBackground))
+                            .foregroundStyle(index == lastFiveSelection ? .white : .primary)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+
+            Text("Use ↑ ↓ and Return")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .frame(minWidth: 320, maxHeight: 320)
+        .onAppear {
+            lastFiveSelection = 0
+        }
+    }
+
+    private func actionButton(title: String, icon: String, action: @escaping () -> Void, shortcut: String) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.title2)
+                .frame(width: 42, height: 42)
+        }
+        .buttonStyle(.bordered)
+        .keyboardShortcut(KeyEquivalent(Character(shortcut)), modifiers: .command)
+        .accessibilityLabel(title)
+    }
+
+    private var recordButton: some View {
+        Button(action: recorder.isRecording ? stopRecording : startRecording) {
+            ZStack {
+                Circle()
+                    .fill(recorder.isRecording ? Color.red : Color(.systemGray4))
+                    .frame(width: 42, height: 42)
+                    .scaleEffect(recorder.isRecording ? 1.1 : 1.0)
+                    .animation(recorder.isRecording ? .easeInOut(duration: 0.75).repeatForever(autoreverses: true) : .default, value: recorder.isRecording)
+
+                Image(systemName: recorder.isRecording ? "stop.fill" : "mic.fill")
+                    .font(.title2)
+                    .foregroundColor(recorder.isRecording ? .white : .primary)
+            }
+        }
+        .buttonStyle(.plain)
+        .keyboardShortcut(KeyEquivalent("r"), modifiers: .command)
+        .accessibilityLabel(recorder.isRecording ? "Stop recording" : "Start recording")
+    }
+
+    private func startRecording() {
+        recorder.requestPermissions { granted in
+            if granted {
+                statusMessage = "Recording..."
+                recorder.startRecording()
+                scheduleAutoStop()
+            } else {
+                statusMessage = "Microphone and Speech access are required."
             }
         }
     }
 
-    // MARK: - Actions
+    private func scheduleAutoStop() {
+        cancelAutoStop()
+        let workItem = DispatchWorkItem { [self] in
+            stopRecording()
+        }
+        autoStopWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 60, execute: workItem)
+    }
 
-    private func toggleRecording() {
-        if recorder.isRecording {
-            statusMessage = ""
-            recorder.stopRecording { text, audioFileName in
-                if !text.isEmpty {
-                    // Put it in the editable box instead of saving right
-                    // away, so a misheard word can be fixed before it's
-                    // committed. The original recording stays linked either way.
-                    pastedText = text
-                    pendingSource = "voice"
-                    pendingAudioFileName = audioFileName
-                    statusMessage = "Review below, then tap Save."
-                } else {
-                    statusMessage = recorder.lastError ?? "Didn't catch that — try again."
-                }
+    private func cancelAutoStop() {
+        autoStopWorkItem?.cancel()
+        autoStopWorkItem = nil
+    }
+
+    private func copyCaptured() {
+        let text = pastedText.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !text.isEmpty else { return }
+
+        copyToClipboard(text)
+        statusMessage = "Captured text copied. It is ready to paste."
+    }
+
+    private func copyToClipboard(_ text: String) {
+        #if canImport(UIKit)
+        UIPasteboard.general.string = text
+        #elseif canImport(AppKit)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+        #endif
+    }
+
+    private func saveCapturedText(_ text: String, source: String, audioPath: String?, auto: Bool = false) {
+        if text == lastSavedContent {
+            if !auto {
+                statusMessage = "This text is already saved."
             }
-        } else {
-            recorder.requestPermissions { granted in
-                if granted {
-                    statusMessage = ""
-                    recorder.startRecording()
-                } else {
-                    statusMessage = "Microphone / Speech access needed — check Settings > Privacy."
-                }
+            return
+        }
+
+        let didSave = store.save(
+            content: text,
+            source: source,
+            audioPath: audioPath
+        )
+
+        guard didSave else {
+            statusMessage = "Save to mymemory.db failed."
+            return
+        }
+
+        lastSavedContent = text
+        refreshEntries()
+
+        withAnimation {
+            showSavedBanner = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation {
+                showSavedBanner = false
             }
         }
+
+        statusMessage = auto
+            ? "Automatically saved last statement to mymemory.db."
+            : "Approved text is now in mymemory.db."
     }
 
     private func pasteFromClipboard() {
-        if let clip = UIPasteboard.general.string {
-            pastedText = clip
-            pendingSource = "text"
-            pendingAudioFileName = nil
-        }
+        pastedText = UIPasteboard.general.string ?? ""
+        pendingSource = "text"
+        pendingAudioFileName = nil
+        statusMessage = "Pasted from clipboard."
     }
 
-    /// Wipes the review box without saving anything — for when a recording
-    /// or paste didn't come out right and you just want to start over.
     private func clearText() {
         pastedText = ""
         pendingSource = "text"
         pendingAudioFileName = nil
-        statusMessage = ""
+        statusMessage = "Screen cleared. The pending text is gone." 
     }
 
-    /// Copies the current box text and opens the chosen AI's website.
-    /// There's no free, official way to hand text straight into ChatGPT,
-    /// Claude, Gemini, or Grok from another app — so this gets you as close
-    /// as possible: the text is already on your clipboard the moment the
-    /// site opens, ready to paste (Cmd+V, or long-press > Paste).
-    private func sendText(to destination: (name: String, urlString: String)) {
-        let text = pastedText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-        UIPasteboard.general.string = text
-        if let url = URL(string: destination.urlString) {
-            UIApplication.shared.open(url)
-        }
-        statusMessage = "Copied — paste it into \(destination.name) once it opens."
-    }
-
-    private func saveTypedText() {
-        let text = pastedText.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func approveAndSave() {
+        let text = pastedText.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
         guard !text.isEmpty else { return }
 
-        // Ask the database itself whether the row went in — never claim
-        // "Saved" on faith alone.
-        let didSave = store.save(content: text, source: pendingSource, audioPath: pendingAudioFileName)
+        let didSave = store.save(
+            content: text,
+            source: pendingSource,
+            audioPath: pendingAudioFileName
+        )
 
         if didSave {
-            pastedText = ""
-            pendingSource = "text"
-            pendingAudioFileName = nil
-            statusMessage = ""
             refreshEntries()
 
-            withAnimation { showSavedBanner = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                withAnimation { showSavedBanner = false }
+            withAnimation {
+                showSavedBanner = true
             }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    showSavedBanner = false
+                }
+            }
+
+            statusMessage =
+                "Approved text is now in mymemory.db."
         } else {
-            statusMessage = "⚠️ Save did not go through — please try again."
+            statusMessage = "Save to mymemory.db failed."
         }
     }
 
-    /// Reads straight from the database (not from on-screen state) so a
-    /// successful result here is real proof the memory was stored and can
-    /// be retrieved later — the whole point of this button.
+    private func stopRecording() {
+        cancelAutoStop()
+        if recorder.isRecording {
+            statusMessage = ""
+            recorder.stopRecording { text, audioFileName in
+                let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !cleaned.isEmpty else {
+                    statusMessage = recorder.lastError ?? "Didn't catch that — try again."
+                    return
+                }
+
+                pastedText = cleaned
+                pendingSource = "voice"
+                pendingAudioFileName = audioFileName
+                copyToClipboard(cleaned)
+                saveCapturedText(cleaned, source: "voice", audioPath: audioFileName, auto: true)
+            }
+        }
+    }
+
+    private func openLastFivePicker() {
+        refreshEntries()
+        showLastFivePicker = true
+    }
+
+    private func applySelectedEntry(_ entry: MemoryEntry) {
+        pastedText = entry.content
+        pendingSource = "text"
+        pendingAudioFileName = nil
+        statusMessage = "Loaded: \(entry.content)"
+        showLastFivePicker = false
+    }
+
     private func playLatest() {
         guard let latest = store.fetchLatest() else {
-            statusMessage = "Nothing saved yet."
+            statusMessage = "Nothing has been approved yet."
             return
         }
-        statusMessage = "Last saved (\(latest.timestamp)): \(latest.content)"
-        readAloud(latest.content)
-    }
 
-    private func readAloud(_ text: String) {
-        let utterance = AVSpeechUtterance(string: text)
+        statusMessage =
+            "Last approved (\(latest.timestamp)): \(latest.content)"
+
+        let utterance = AVSpeechUtterance(string: latest.content)
         utterance.rate = 0.45
         synthesizer.speak(utterance)
     }
 
     private func refreshEntries() {
-        if searchText.isEmpty && !useDateFilter {
-            entries = store.fetchRecent()
-        } else {
-            entries = store.search(
-                query: searchText,
-                startDate: useDateFilter ? filterStartDate : nil,
-                endDate: useDateFilter ? filterEndDate : nil
-            )
+        entries = store.fetchRecent()
+    }
+}
+
+private struct WindowSizeAccessor: View {
+    let initialSize: CGSize
+    let onChange: (CGSize) -> Void
+
+    var body: some View {
+        WindowSizeAccessorBridge(initialSize: initialSize, onChange: onChange)
+            .frame(width: 0, height: 0)
+    }
+}
+
+private struct WindowSizeAccessorBridge: View {
+    let initialSize: CGSize
+    let onChange: (CGSize) -> Void
+
+    var body: some View {
+        #if canImport(UIKit)
+        UIKitWindowSizeAccessor(initialSize: initialSize, onChange: onChange)
+        #else
+        AppKitWindowSizeAccessor(initialSize: initialSize, onChange: onChange)
+        #endif
+    }
+}
+
+#if canImport(UIKit)
+private struct UIKitWindowSizeAccessor: UIViewControllerRepresentable {
+    let initialSize: CGSize
+    let onChange: (CGSize) -> Void
+
+    func makeUIViewController(context: Context) -> UIViewController {
+        let controller = UIViewController()
+        controller.view.isHidden = true
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        DispatchQueue.main.async {
+            guard let window = uiViewController.view.window else { return }
+
+            if !context.coordinator.didSetInitialSize {
+                context.coordinator.didSetInitialSize = true
+                var frame = window.frame
+                frame.size = initialSize
+                if let scene = uiViewController.view.window?.windowScene {
+                    scene.title = scene.title // keep scene alive
+                }
+                window.rootViewController?.view.window?.frame = frame
+            }
+
+            let newSize = window.bounds.size
+            if newSize != context.coordinator.lastReportedSize {
+                context.coordinator.lastReportedSize = newSize
+                onChange(newSize)
+            }
         }
     }
 
-    /// Every file worth getting out of the app's private sandbox: the
-    /// database itself, plus every recorded audio clip. Handed to a native
-    /// ShareLink so you can save them to Files, iCloud Drive, AirDrop them
-    /// to your Mac, etc.
-    private func exportURLs() -> [URL] {
-        var urls: [URL] = [store.dbURL]
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let audioFolder = docs.appendingPathComponent("Audio", isDirectory: true)
-        if let files = try? FileManager.default.contentsOfDirectory(at: audioFolder, includingPropertiesForKeys: nil) {
-            urls.append(contentsOf: files)
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    class Coordinator: NSObject {
+        var lastReportedSize: CGSize = .zero
+        var didSetInitialSize = false
+    }
+}
+#else
+private struct AppKitWindowSizeAccessor: NSViewControllerRepresentable {
+    let initialSize: CGSize
+    let onChange: (CGSize) -> Void
+
+    func makeNSViewController(context: Context) -> NSViewController {
+        let controller = NSViewController()
+        controller.view = NSView(frame: .zero)
+        controller.view.isHidden = true
+        return controller
+    }
+
+    func updateNSViewController(_ nsViewController: NSViewController, context: Context) {
+        DispatchQueue.main.async {
+            guard let window = nsViewController.view.window else { return }
+
+            if !context.coordinator.didSetInitialSize {
+                context.coordinator.didSetInitialSize = true
+                window.setContentSize(initialSize)
+            }
+
+            let newSize = window.contentLayoutRect.size
+            if newSize != context.coordinator.lastReportedSize {
+                context.coordinator.lastReportedSize = newSize
+                onChange(newSize)
+            }
         }
-        return urls
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    class Coordinator: NSObject {
+        var lastReportedSize: CGSize = .zero
+        var didSetInitialSize = false
+    }
+}
+#endif
+
+extension Collection {
+    subscript(safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }
 

@@ -23,11 +23,6 @@ final class MemoryStore {
     private var db: OpaquePointer?
     let dbURL: URL
 
-    // Put the database inside the app's own Documents folder so it works
-    // on the iPad without needing access to your Mac's file system.
-    // If you later want this synced with your Mac's mymemory.db, this same
-    // file can be moved into an iCloud Drive folder instead — ask me when
-    // you're ready for that step.
     init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         dbURL = docs.appendingPathComponent("mymemory.db")
