@@ -30,12 +30,8 @@ struct ContentView: View {
     @State private var lastSavedContent: String?
     @State private var autoStopWorkItem: DispatchWorkItem?
 
-    @AppStorage("SabaRememberWindowWidth") private var savedWindowWidth: Double = 760
-
-    private var preferredWindowWidth: Double { max(savedWindowWidth, 240) }
-
-    // The window is a fixed-height bar: title bar + button strip + status line.
-    // Width is remembered and resizable; height is pinned.
+    // The window is a fixed-size bar: title bar + button strip + status line.
+    private let barWidth: Double = 260
     private var barHeight: Double { 88 + Double(titleBarClearance) }
 
     // On the Mac the window's title bar (close/minimize buttons + "Saba Remember")
@@ -73,6 +69,8 @@ struct ContentView: View {
                     Text(statusMessage)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                         .padding(.horizontal, 12)
                         .padding(.bottom, 4)
                 }
@@ -81,10 +79,8 @@ struct ContentView: View {
             .padding(.horizontal, 10)
             .padding(.top, titleBarClearance)
         }
-        .frame(minWidth: 240, minHeight: barHeight, maxHeight: barHeight)
-        .background(WindowSizeAccessor(initialSize: CGSize(width: preferredWindowWidth, height: barHeight)) { size in
-            savedWindowWidth = size.width
-        })
+        .frame(width: barWidth, height: barHeight)
+        .background(WindowSizeAccessor(initialSize: CGSize(width: barWidth, height: barHeight)) { _ in })
         .onAppear {
             recorder.refreshAvailableInputs()
         }
@@ -311,20 +307,12 @@ private struct UIKitWindowSizeAccessor: UIViewControllerRepresentable {
         DispatchQueue.main.async {
             guard let window = uiViewController.view.window else { return }
 
-            if !context.coordinator.didSetInitialSize {
-                context.coordinator.didSetInitialSize = true
-                // Setting the frame directly is ignored on the Mac; size limits are
-                // the only request it honors. Clamp the window to exactly the bar
-                // size, then a moment later relax the width so it stays resizable.
-                // Height remains pinned forever.
-                if let restrictions = window.windowScene?.sizeRestrictions {
-                    restrictions.minimumSize = initialSize
-                    restrictions.maximumSize = initialSize
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        restrictions.minimumSize = CGSize(width: 240, height: initialSize.height)
-                        restrictions.maximumSize = CGSize(width: 4000, height: initialSize.height)
-                    }
-                }
+            // Setting the frame directly is ignored on the Mac; size limits are
+            // the only request it honors. min == max pins the window to exactly
+            // the bar size — it opens at this size and cannot be resized.
+            if let restrictions = window.windowScene?.sizeRestrictions {
+                restrictions.minimumSize = initialSize
+                restrictions.maximumSize = initialSize
             }
 
             let newSize = window.bounds.size
@@ -360,9 +348,9 @@ private struct AppKitWindowSizeAccessor: NSViewControllerRepresentable {
         DispatchQueue.main.async {
             guard let window = nsViewController.view.window else { return }
 
-            // Pin the window height to the bar; only the width can be resized.
-            window.contentMinSize = NSSize(width: 240, height: initialSize.height)
-            window.contentMaxSize = NSSize(width: 4000, height: initialSize.height)
+            // Pin the window to exactly the bar size; no resizing.
+            window.contentMinSize = NSSize(width: initialSize.width, height: initialSize.height)
+            window.contentMaxSize = NSSize(width: initialSize.width, height: initialSize.height)
 
             if !context.coordinator.didSetInitialSize {
                 context.coordinator.didSetInitialSize = true
