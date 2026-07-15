@@ -22,8 +22,13 @@ Endpoints (for AI tool systems — Open WebUI, Claude, anything HTTP):
   POST /search           find minutes by words        {"words": "...", "limit": 25}
   POST /recent           the latest minutes           {"limit": 10}
   POST /on-day           minutes captured on a date   {"date": "2026-07-15"}
-  POST /answer-question  paste-ready evidence block   {"question": "..."}
+  POST /answer-question  recall: matching minutes     {"question": "..."}
+  POST /form-command     command from the minutes     {"question": "..."}
   POST /ask-local        Ollama forms the answer      {"question": "..."}
+
+Time asks are understood directly: "what was I saying 5 minutes ago",
+"the last 2 hours", "yesterday", "today". Anything more complicated
+is a job for SQL against mymemory.db, not for this tool.
 
 Install as always-on (starts when the Mac starts):
     python3 memory_connector.py --install
@@ -142,6 +147,72 @@ def minutes_on_day(date_text, limit=MAX_LIMIT):
             if str(m["timestamp"]).startswith(day)][:limit]
 
 
+# ---------------------------------------------------------------- time asks
+#
+# Most asks are time asks: "what was I saying 5 minutes ago",
+# "what was the conclusion I reached yesterday". These are answered by
+# a time window, with any leftover meaningful words narrowing inside it.
+# Anything more complicated is a job for SQL, not for this tool.
+
+FILLER_WORDS = set(
+    "what was were is are am i me my the a an did do doing say saying said "
+    "talk talking talked about ago last past few couple this that it to of "
+    "in on at and or reached reach make making from".split())
+
+
+def parse_timeframe(question):
+    """Find a time window in the question. Returns (since, until, label)
+    as 'YYYY-MM-DD HH:MM:SS' strings, or None when no time is spoken."""
+    q = (question or "").lower()
+    now = datetime.now()
+
+    m = re.search(r"(\d+)\s*(minute|min|hour|hr|day)s?", q)
+    if m:
+        n = int(m.group(1))
+        unit = m.group(2)
+        if unit.startswith(("min",)):
+            seconds, label = n * 60, f"the last {n} minute(s)"
+        elif unit.startswith(("hour", "hr")):
+            seconds, label = n * 3600, f"the last {n} hour(s)"
+        else:
+            seconds, label = n * 86400, f"the last {n} day(s)"
+        since = datetime.fromtimestamp(now.timestamp() - seconds)
+        return (f"{since:%Y-%m-%d %H:%M:%S}", f"{now:%Y-%m-%d %H:%M:%S}",
+                label)
+
+    if "yesterday" in q:
+        y = datetime.fromtimestamp(now.timestamp() - 86400)
+        return (f"{y:%Y-%m-%d} 00:00:00", f"{y:%Y-%m-%d} 23:59:59",
+                "yesterday")
+    if "today" in q or "this morning" in q:
+        return (f"{now:%Y-%m-%d} 00:00:00", f"{now:%Y-%m-%d} 23:59:59",
+                "today")
+    return None
+
+
+def gather(question):
+    """The one gathering rule: a time window when one is spoken,
+    word matching otherwise. Returns (minutes oldest-first, label)."""
+    frame = parse_timeframe(question)
+    if frame:
+        since, until, label = frame
+        window = [m for m in fetch_minutes()
+                  if since <= str(m["timestamp"]) <= until]
+        window.reverse()                     # oldest first — reads as said
+        # Leftover meaningful words narrow the window, when they match.
+        extra = [w for w in words_of(question) if w not in FILLER_WORDS
+                 and not w.isdigit()]
+        if extra:
+            narrowed = [m for m in window
+                        if any(w in m["content"].lower() for w in extra)]
+            if narrowed:
+                return narrowed, label
+        return window, label
+    found = search_minutes(question, EVIDENCE_MINUTES)
+    found.reverse()
+    return found, "matching words"
+
+
 # ---------------------------------------------------------------- the block
 
 def format_minute(m):
@@ -161,29 +232,23 @@ def format_minute(m):
 
 
 def build_block(question):
-    """The paste-ready text block: Saba's relevant minutes, formed for an AI."""
-    matches = search_minutes(question, EVIDENCE_MINUTES)
-    lines = []
-    lines.append("MEMORY BRIEFING — from Saba's personal memory file")
-    lines.append(f"Prepared: {datetime.now():%Y-%m-%d %H:%M}")
-    lines.append(f"Question: {question.strip()}")
-    lines.append("")
-    if matches:
-        lines.append("These are Saba's own captured notes (his minutes), "
-                     "strongest match first:")
-        for m in matches:
-            lines.append("  - " + format_minute(m))
-    else:
-        recents = fetch_minutes()[:5]
-        lines.append("No minutes matched the question directly. "
-                     "For context, his most recent minutes are:")
-        for m in recents:
-            lines.append("  - " + format_minute(m))
-    lines.append("")
-    lines.append("Please answer the question using only these notes as the "
-                 "source of what Saba said and did. If the notes do not "
-                 "contain the answer, say so plainly.")
+    """Recall: the matching minutes spoken back plainly, trail kept.
+    No wrapping, no instructions — just what was said and when."""
+    matches, label = gather(question)
+    if not matches:
+        return f"Nothing captured in {label}.", matches
+    lines = [f"You said ({label}):"]
+    for m in matches:
+        lines.append("  " + format_minute(m))
     return "\n".join(lines), matches
+
+
+def build_command(question):
+    """Form a command from the minutes: only the spoken words, joined
+    clean, ready to paste into any AI as the prompt itself."""
+    matches, label = gather(question)
+    text = "\n\n".join(m["content"].strip() for m in matches)
+    return text, matches, label
 
 
 # ---------------------------------------------------------------- ollama
@@ -200,11 +265,15 @@ def ask_ollama(question):
     """Have the local model form the answer from the evidence block.
     Private by construction: the model runs on this Mac."""
     block, matches = build_block(question)
+    prompt = (f"These are notes Saba spoke into his memory file.\n\n{block}\n\n"
+              f"His question: {question.strip()}\n"
+              "Answer briefly from these notes only; if they don't contain "
+              "the answer, say so.")
     payload = json.dumps({
         "model": OLLAMA_MODEL,
         "stream": False,
         "think": False,
-        "messages": [{"role": "user", "content": block}],
+        "messages": [{"role": "user", "content": prompt}],
     }).encode("utf-8")
     req = urllib.request.Request(
         OLLAMA_URL + "/api/chat", data=payload,
@@ -269,8 +338,14 @@ def openapi_spec():
                 {"date": {"type": "string"}}, ["date"])},
             "/answer-question": {"post": op(
                 "answer_question",
-                "An evidence package for a natural-language question: "
-                "the relevant minutes formed into a paste-ready block.",
+                "Recall: the minutes matching a question — time asks like "
+                "'5 minutes ago' or 'yesterday' understood — spoken back "
+                "plainly with timestamps and recording names.",
+                {"question": {"type": "string"}}, ["question"])},
+            "/form-command": {"post": op(
+                "form_command",
+                "Form a paste-ready command from the matching minutes: "
+                "only Saba's spoken words, joined clean.",
                 {"question": {"type": "string"}}, ["question"])},
         },
     }
@@ -304,7 +379,8 @@ PAGE = """<!DOCTYPE html>
   .row { display: flex; gap: 10px; margin-top: 12px; }
   button { flex: 1; padding: 13px 8px; font-size: 1rem; font-weight: 600;
            border: 0; border-radius: 12px; cursor: pointer; }
-  #formBtn { background: #7a5cc4; color: #fff; }
+  #showBtn { background: #7a5cc4; color: #fff; }
+  #formBtn { background: #43317a; color: #fff; }
   #localBtn { background: #e4dbf5; color: #43317a; }
   @media (prefers-color-scheme: dark) { #localBtn { background:#3a3153; color:#d9ccf5; } }
   .card { margin-top: 16px; background: #fff; border-radius: 12px; padding: 14px;
@@ -319,9 +395,12 @@ PAGE = """<!DOCTYPE html>
 <div class="wrap">
   <h1>Ask My Memory <span class="dot">&#9679;</span></h1>
   <p class="sub">Your minutes are read-only &mdash; asking can never change them.</p>
-  <textarea id="q" placeholder="What do you want to remember?"></textarea>
+  <textarea id="q" placeholder="What was I saying 5 minutes ago?"></textarea>
   <div class="row">
-    <button id="formBtn">Form text to paste</button>
+    <button id="showBtn">Show me</button>
+    <button id="formBtn">Form command</button>
+  </div>
+  <div class="row">
     <button id="localBtn">Ask here (private)</button>
   </div>
   <div class="status" id="status"></div>
@@ -347,11 +426,18 @@ function post(path, body, onOk) {
     })
     .catch(function () { st.textContent = 'Could not reach the Mac. Same Wi-Fi?'; });
 }
-document.getElementById('formBtn').onclick = function () {
+document.getElementById('showBtn').onclick = function () {
   if (!q.value.trim()) { st.textContent = 'Type a question first.'; return; }
   post('/answer-question', { question: q.value }, function (j) {
-    show(j.block, true);
-    st.textContent = j.matches + ' minute(s) matched.';
+    show(j.block, false);
+    st.textContent = j.matches + ' minute(s).';
+  });
+};
+document.getElementById('formBtn').onclick = function () {
+  if (!q.value.trim()) { st.textContent = 'Type a question first.'; return; }
+  post('/form-command', { question: q.value }, function (j) {
+    show(j.command, true);
+    st.textContent = 'Command formed from ' + j.from + '.';
   });
 };
 document.getElementById('localBtn').onclick = function () {
@@ -475,6 +561,16 @@ class Handler(BaseHTTPRequestHandler):
                     raise ConnectorError(400, "Ask a question.")
                 block, matches = build_block(question)
                 self.send_json({"block": block, "matches": len(matches)})
+            elif path == "/form-command":
+                question = (body.get("question") or "").strip()
+                if not question:
+                    raise ConnectorError(400, "Say which minutes — e.g. "
+                                              "'the last 10 minutes'.")
+                text, matches, label = build_command(question)
+                if not matches:
+                    raise ConnectorError(404, f"Nothing captured in {label}.")
+                self.send_json({"command": text, "matches": len(matches),
+                                "from": label})
             elif path == "/ask-local":
                 question = (body.get("question") or "").strip()
                 if not question:
