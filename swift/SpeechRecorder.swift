@@ -2,7 +2,11 @@
 //  SpeechRecorder.swift
 //  Saba Remember
 //
-//  Records audio to a file, then transcribes it to text on-device.
+//  Writes as you speak: the microphone feeds the speech recognizer LIVE
+//  while the very same audio is written to an .m4a evidence file. The
+//  text accumulates during the recording, so if recognition hiccups
+//  midway, everything heard up to that moment is still delivered and
+//  saved — never nothing.
 //  Requires two Info.plist keys (see the setup guide):
 //    NSMicrophoneUsageDescription
 //    NSSpeechRecognitionUsageDescription
@@ -30,8 +34,14 @@ final class SpeechRecorder: NSObject, ObservableObject {
     /// Which one is currently selected for recording (iPad/iPhone only).
     @Published var selectedInputUID: String?
 
-    private var audioRecorder: AVAudioRecorder?
+    private let audioEngine = AVAudioEngine()
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recognitionTask: SFSpeechRecognitionTask?
+    private var audioFile: AVAudioFile?
     private var currentFileName: String?
+    /// Everything the recognizer has heard so far — grows while you speak.
+    private var liveText = ""
+    private var finishCompletion: ((String, String?) -> Void)?
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private let selectedInputDefaultsKey = "SabaRemember.selectedMicUID"
 
@@ -125,7 +135,7 @@ final class SpeechRecorder: NSObject, ObservableObject {
 
     #endif
 
-    // MARK: - Recording
+    // MARK: - Recording (write-as-you-speak)
 
     func startRecording() {
         let session = AVAudioSession.sharedInstance()
@@ -150,77 +160,119 @@ final class SpeechRecorder: NSObject, ObservableObject {
             return
         }
 
+        guard let recognizer = speechRecognizer, recognizer.isAvailable else {
+            lastError = "Speech recognizer unavailable right now."
+            return
+        }
+
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd_HHmmss"
         let fileName = "\(formatter.string(from: Date())).m4a"
         currentFileName = fileName
         let fileURL = audioFolder.appendingPathComponent(fileName)
 
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 44100,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-        ]
-
-        do {
-            audioRecorder = try AVAudioRecorder(url: fileURL, settings: settings)
-            audioRecorder?.record()
-            isRecording = true
-            lastError = nil
-        } catch {
-            lastError = "Could not start recording: \(error.localizedDescription)"
-        }
-    }
-
-    /// Stops recording and returns the transcribed text plus the audio filename
-    /// (relative to the Audio folder) via the completion handler.
-    func stopRecording(completion: @escaping (String, String?) -> Void) {
-        audioRecorder?.stop()
-        isRecording = false
-        try? AVAudioSession.sharedInstance().setActive(false)
-
-        guard let fileName = currentFileName else {
-            completion("", nil)
-            return
-        }
-        let fileURL = audioFolder.appendingPathComponent(fileName)
-        transcribe(fileURL: fileURL) { [weak self] text in
-            completion(text, fileName)
-            self?.isTranscribing = false
-        }
-    }
-
-    // MARK: - Transcription
-
-    private func transcribe(fileURL: URL, completion: @escaping (String) -> Void) {
-        guard let recognizer = speechRecognizer, recognizer.isAvailable else {
-            lastError = "Speech recognizer unavailable right now."
-            completion("")
-            return
-        }
-
-        isTranscribing = true
-        let request = SFSpeechURLRecognitionRequest(url: fileURL)
-
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
         // Prefer on-device recognition when the device supports it —
         // keeps things working without needing a network connection.
         if recognizer.supportsOnDeviceRecognition {
             request.requiresOnDeviceRecognition = true
         }
+        recognitionRequest = request
+        liveText = ""
 
-        recognizer.recognitionTask(with: request) { [weak self] result, error in
-            if let error = error {
-                DispatchQueue.main.async {
-                    self?.lastError = "Transcription error: \(error.localizedDescription)"
-                    completion("")
-                }
-                return
-            }
-            guard let result = result, result.isFinal else { return }
+        let inputNode = audioEngine.inputNode
+        let format = inputNode.outputFormat(forBus: 0)
+
+        // The evidence file keeps the mic's own sample rate and channel
+        // count — whatever the tap delivers is exactly what gets written.
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: format.sampleRate,
+            AVNumberOfChannelsKey: Int(format.channelCount),
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+        do {
+            audioFile = try AVAudioFile(forWriting: fileURL, settings: settings)
+        } catch {
+            lastError = "Could not open the recording file: \(error.localizedDescription)"
+            return
+        }
+
+        // One stream of sound, two destinations: the evidence file and
+        // the recognizer. (The tap runs on the audio thread, so it only
+        // touches the two locals captured here.)
+        let file = audioFile
+        inputNode.removeTap(onBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+            try? file?.write(from: buffer)
+            request.append(buffer)
+        }
+
+        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
             DispatchQueue.main.async {
-                completion(result.bestTranscription.formattedString)
+                guard let self = self else { return }
+                if let result = result {
+                    self.liveText = result.bestTranscription.formattedString
+                    if result.isFinal { self.finishDelivery() }
+                }
+                if error != nil {
+                    // The point of write-as-you-speak: a hiccup delivers
+                    // everything heard so far instead of nothing.
+                    self.finishDelivery()
+                }
             }
         }
+
+        do {
+            audioEngine.prepare()
+            try audioEngine.start()
+            isRecording = true
+            lastError = nil
+        } catch {
+            lastError = "Could not start recording: \(error.localizedDescription)"
+            inputNode.removeTap(onBus: 0)
+            recognitionTask?.cancel()
+            recognitionTask = nil
+            recognitionRequest = nil
+            audioFile = nil
+        }
+    }
+
+    /// Stops recording and returns the accumulated text plus the audio
+    /// filename (relative to the Audio folder) via the completion handler.
+    func stopRecording(completion: @escaping (String, String?) -> Void) {
+        guard isRecording else {
+            completion("", nil)
+            return
+        }
+        isRecording = false
+        isTranscribing = true
+        finishCompletion = completion
+
+        audioEngine.inputNode.removeTap(onBus: 0)
+        audioEngine.stop()
+        audioFile = nil                      // closes the evidence file
+        recognitionRequest?.endAudio()       // recognizer wraps up
+
+        // If the recognizer neither finalizes nor errors within a few
+        // seconds, deliver what has been heard rather than keep waiting.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+            self?.finishDelivery()
+        }
+    }
+
+    /// Hands the accumulated text to whoever asked for it. Safe to call
+    /// more than once — only the first call after a stop delivers.
+    private func finishDelivery() {
+        guard let completion = finishCompletion else { return }
+        finishCompletion = nil
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        recognitionRequest = nil
+        isTranscribing = false
+        try? AVAudioSession.sharedInstance().setActive(false)
+        completion(liveText.trimmingCharacters(in: .whitespacesAndNewlines),
+                   currentFileName)
     }
 }
