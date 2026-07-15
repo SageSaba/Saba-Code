@@ -145,9 +145,19 @@ def minutes_on_day(date_text, limit=MAX_LIMIT):
 # ---------------------------------------------------------------- the block
 
 def format_minute(m):
+    """One minute as a line that keeps its whole trail: the clock time,
+    how it was captured, and the recording it came from — so any answer
+    can always be traced back to the sound of Saba saying it."""
     ts = str(m["timestamp"])[:16]
-    src = f" ({m['source']})" if m.get("source") else ""
-    return f"[{ts}]{src} {m['content'].strip()}"
+    src = m.get("source") or ""
+    rec = m.get("audio_path") or ""
+    if src and rec:
+        tag = f" ({src} — recording: {rec})"
+    elif src:
+        tag = f" ({src})"
+    else:
+        tag = ""
+    return f"[{ts}]{tag} {m['content'].strip()}"
 
 
 def build_block(question):
