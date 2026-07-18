@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask the Archive</title>
+<style>
+  /* Same dress as the Archive Viewer. */
+  :root {
+    --bg: #f3f3f0; --panel: #ffffff; --field: #eae9e5; --ink: #1d1d1f;
+    --ink-2: #6f6f74; --line: #d8d7d3; --accent: #2456c8; --accent-soft: #e3ebfb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161617; --panel: #222224; --field: #2d2d30; --ink: #f0f0f2;
+      --ink-2: #a0a0a6; --line: #3a3a3e; --accent: #6f9bff; --accent-soft: #24314f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 8px 10px 30px;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.5;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+
+  .ask-box {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px; display: flex; gap: 8px; align-items: flex-start;
+  }
+  #q {
+    flex: 1; min-height: 64px; background: var(--field); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 17px; color: var(--ink);
+  }
+  #askBtn {
+    border: none; background: var(--accent); color: #fff; font: inherit; font-weight: 600;
+    border-radius: 8px; min-height: 44px; padding: 0 20px; cursor: pointer;
+  }
+  #askBtn:disabled { opacity: 0.5; cursor: wait; }
+  button:focus-visible, #q:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .status { color: var(--ink-2); font-size: 13px; padding: 0 4px; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .panel-head {
+    padding: 6px 10px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 13px;
+    color: var(--ink-2);
+  }
+  #answer { padding: 12px 16px; font-size: 16px; white-space: pre-wrap; }
+  #answer.empty { color: var(--ink-2); font-size: 14px; }
+
+  .receipt { padding: 6px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .receipt:last-child { border-bottom: none; }
+  .receipt .meta { color: var(--accent); font-weight: 700; font-size: 12px; }
+  .receipt .words { color: var(--ink-2); }
+  .note { background: var(--accent-soft); padding: 8px 12px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="ask-box">
+    <textarea id="q" autofocus
+      placeholder="Ask your archive anything — e.g.  How often was self-denial preached?"></textarea>
+    <button id="askBtn">Ask</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div class="panel">
+    <div class="panel-head">Answer — from your own recordings, dates and times cited</div>
+    <div id="answer" class="empty">Ask above. The archive is searched first, then Claude answers from what it finds — usually well under a minute.</div>
+  </div>
+
+  <div class="panel" id="receiptsPanel" hidden>
+    <div class="panel-head">The receipts — the exact moments the answer stands on</div>
+    <div id="noteLine" class="note" hidden></div>
+    <div id="receipts"></div>
+  </div>
+
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
+  async function ask() {
+    const question = $("q").value.trim();
+    if (question.length < 3) { $("status").textContent = "Type a question first."; return; }
+    $("askBtn").disabled = true;
+    $("answer").className = "empty";
+    $("answer").textContent = "…";
+    $("receiptsPanel").hidden = true;
+    $("status").textContent = "Searching the archive — by meaning and by words…";
+    const slow = setTimeout(() =>
+      $("status").textContent = "Found the moments — Claude is reading them and writing your answer…", 4000);
+    let d;
+    try {
+      const res = await fetch("/ask", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }) });
+      d = await res.json();
+    } catch {
+      clearTimeout(slow);
+      $("status").textContent = "Could not reach the helper — is Ask the Archive still running?";
+      $("askBtn").disabled = false;
+      return;
+    }
+    clearTimeout(slow);
+    $("askBtn").disabled = false;
+    if (d.error) { $("status").textContent = d.error; $("answer").textContent = ""; return; }
+    $("status").textContent = "";
+    $("answer").className = "";
+    $("answer").textContent = d.answer;
+    const receipts = d.receipts || [];
+    if (receipts.length) {
+      $("receiptsPanel").hidden = false;
+      $("noteLine").hidden = !d.note;
+      $("noteLine").textContent = d.note || "";
+      $("receipts").innerHTML = receipts.map(r =>
+        '<div class="receipt"><div class="meta">' + esc(r.date) +
+        (r.title ? " · " + esc(r.title) : "") +
+        (r.speaker ? " · " + esc(r.speaker) : "") + " · at " + esc(r.start) +
+        '</div><div class="words">' + esc(r.text) + "</div></div>").join("");
+    }
+  }
+
+  $("askBtn").addEventListener("click", ask);
+  $("q").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); }
+    if (e.key === "Escape") $("q").value = "";
+  });
+</script>
+</body>
+</html>
