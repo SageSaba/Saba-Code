@@ -21,7 +21,7 @@ Run: nohup python3 reading_pass.py &
 """
 import json, os, re, sqlite3, time, datetime, urllib.request
 
-DB = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB = "/Users/saba/Archive/Sermons.db"
 WORK = "/Volumes/Data/Video Archive/SQL Files/reading_pass"
 LOG = os.path.join(WORK, "reading.log")
 OLLAMA = "http://127.0.0.1:11434"

@@ -30,7 +30,7 @@ import re
 import sqlite3
 from datetime import datetime
 
-DB_PATH = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB_PATH = "/Users/saba/Archive/Sermons.db"
 
 SHORT_PART = 600.0          # seconds; parts longer than this keep their kind
 BEFORE_WINDOW = 90.0        # seconds of raw lines examined before a part

@@ -14,7 +14,7 @@ video files alongside, or the receiver gets text and clocks only.
 """
 import os, sqlite3, datetime
 
-MASTER = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+MASTER = "/Users/saba/Archive/Sermons.db"
 GIFT = "/Volumes/Data/Video Archive/SQL Files/EVM.db"
 BANNERS = ("RFOD", "EVM")
 

@@ -13,7 +13,7 @@ Usage: meanings_search.py "how am I saved by the blood" [-n 10]
 import argparse, array, json, sqlite3, urllib.request
 import numpy as np
 
-DB = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB = "/Users/saba/Archive/Sermons.db"
 MODEL = "nomic-embed-text"
 OLLAMA = "http://localhost:11434/api/embed"
 

@@ -22,7 +22,7 @@ wrap in `taskpolicy -c background` to keep the machine usable).
 """
 import argparse, array, json, sqlite3, urllib.request
 
-DB = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB = "/Users/saba/Archive/Sermons.db"
 MODEL = "nomic-embed-text"
 OLLAMA = "http://localhost:11434/api/embed"
 BATCH = 32

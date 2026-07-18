@@ -30,7 +30,7 @@ import subprocess
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-DB_PATH = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB_PATH = "/Users/saba/Archive/Sermons.db"
 HOST = "127.0.0.1"
 PORT = 8768
 HERE = os.path.dirname(os.path.abspath(__file__))

@@ -12,7 +12,7 @@ Log: prints to its own nohup file (xwalls_import.log beside videos).
 """
 import os, re, sqlite3, subprocess, time, datetime, shutil
 
-DB = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB = "/Users/saba/Archive/Sermons.db"
 FOLDER = "/Volumes/Data/Video Archive/Without Walls"
 LOG = os.path.join(FOLDER, "xwalls_import.log")
 

@@ -11,7 +11,7 @@ Backup taken by the caller before running.
 import sqlite3, json, re, sys
 from difflib import SequenceMatcher
 
-DB = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB = "/Users/saba/Archive/Sermons.db"
 SERVICE = int(sys.argv[1])
 WHISPER_JSON = sys.argv[2]
 

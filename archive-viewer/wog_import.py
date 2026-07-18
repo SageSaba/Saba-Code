@@ -12,7 +12,7 @@ Backup taken at start.
 """
 import os, re, sqlite3, shutil, datetime
 
-DB = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB = "/Users/saba/Archive/Sermons.db"
 FOLDER = "/Volumes/Data/Video Archive/WOG_/1992/05 June"
 
 

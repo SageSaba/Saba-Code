@@ -14,7 +14,7 @@ Run:  nohup python3 clock_repair_batch.py &
 """
 import os, sqlite3, subprocess, time, datetime, sys
 
-DB = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB = "/Users/saba/Archive/Sermons.db"
 WORK = "/Volumes/Data/Video Archive/SQL Files/clock_repair"
 MODEL = "/Users/saba/ggml-medium.en-q5_0.bin"
 ALIGN = os.path.join(os.path.dirname(os.path.abspath(__file__)),

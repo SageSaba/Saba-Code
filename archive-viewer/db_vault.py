@@ -14,22 +14,26 @@ until Saba rules on pruning.
 """
 import os, sqlite3, datetime
 
+# Each database is vaulted onto the OTHER physical disk from where it
+# lives: Sermons.db (internal) -> the Data drive; EVM.db (Data drive)
+# -> the internal DB Vault. Two spindles for everything, always.
 SOURCES = [
-    "/Volumes/Data/Video Archive/SQL Files/Sermons.db",
-    "/Volumes/Data/Video Archive/SQL Files/EVM.db",
+    ("/Users/saba/Archive/Sermons.db",
+     "/Volumes/Data/Video Archive/SQL Files/backups"),
+    ("/Volumes/Data/Video Archive/SQL Files/EVM.db",
+     os.path.expanduser("~/Desktop/DB Vault")),
 ]
-VAULT = os.path.expanduser("~/Desktop/DB Vault")
 
 
 def main():
-    os.makedirs(VAULT, exist_ok=True)
     stamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}"
-    for src in SOURCES:
+    for src, vault in SOURCES:
+        os.makedirs(vault, exist_ok=True)
         if not os.path.exists(src):
             print("MISSING (drive unplugged?):", src)
             continue
         name = os.path.splitext(os.path.basename(src))[0]
-        dest = os.path.join(VAULT, f"{name}_{stamp}.db")
+        dest = os.path.join(vault, f"{name}_{stamp}.db")
         with sqlite3.connect(src) as s, sqlite3.connect(dest) as d:
             s.backup(d)
             ok = d.execute("PRAGMA quick_check").fetchone()[0]

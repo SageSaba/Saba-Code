@@ -18,7 +18,7 @@ import sqlite3
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-DB_PATH = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB_PATH = "/Users/saba/Archive/Sermons.db"
 VIDEO_ROOT = "/Volumes/Data/Video Archive"
 PORT = 8765
 HERE = os.path.dirname(os.path.abspath(__file__))

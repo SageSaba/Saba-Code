@@ -27,7 +27,7 @@ Run:  python3 build_organizations.py
 import sqlite3
 import sys
 
-DB_PATH = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB_PATH = "/Users/saba/Archive/Sermons.db"
 
 BANNERS = [
     ("TRCF", "Travelers Rest Christ Fellowship", "2014-2025"),

@@ -14,7 +14,7 @@ Skips rows this importer already made. Run with the DB backed up.
 """
 import os, re, sqlite3, zipfile, html, datetime
 
-DB = "/Volumes/Data/Video Archive/SQL Files/Sermons.db"
+DB = "/Users/saba/Archive/Sermons.db"
 ROOT = "/Users/saba/Desktop/Sermon Notes"
 YEARS = ["2011", "2012", "2013", "2014"]
 MONTHS = {m: i + 1 for i, m in enumerate(
