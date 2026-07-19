@@ -82,6 +82,23 @@ def main():
         date = date_from_title(title)
         src = "title (TRCF YouTube)"
         if not date:
+            # livestream rung (2026-07-19): a livestream's broadcast
+            # date IS the service date — the stream happened when the
+            # service happened. Old uploads still date nothing.
+            info_path = os.path.join(
+                FOLDER, os.path.splitext(name)[0] + ".info.json")
+            if os.path.exists(info_path):
+                try:
+                    import json as _json
+                    info = _json.load(open(info_path))
+                    stamp = (info.get("release_date")
+                             or info.get("upload_date"))
+                    if info.get("was_live") and stamp and len(stamp) == 8:
+                        date = f"{stamp[:4]}-{stamp[4:6]}-{stamp[6:]}"
+                        src = "livestream broadcast date (TRCF YouTube)"
+                except (ValueError, OSError):
+                    pass
+        if not date:
             date = "undated"   # upload stamps never date a service
             src = ("filename (TRCF YouTube) — upload stamp rejected as "
                    "date evidence; awaiting the channel keeper's testimony")
