@@ -279,7 +279,30 @@ def passage_lines(con, service_id, seg_first, seg_last):
     ]
 
 
-def meaning_hits(con, question):
+def ruled_speaker_services(query_words):
+    """Services whose APPROVED speaker ruling names someone the question
+    asks about -> {service_id: ruled name}. Ruled names are findable."""
+    if not os.path.exists(SUG_DB):
+        return {}
+    qset = set(query_words)
+    out = {}
+    try:
+        con = sqlite3.connect(SUG_DB, timeout=10)
+        rows = con.execute(
+            "SELECT service_id, proposed_value FROM suggestions "
+            "WHERE status='approved' AND suggestion_type='speaker' "
+            "AND service_id IS NOT NULL").fetchall()
+        con.close()
+    except sqlite3.Error:
+        return {}
+    for sid, name in rows:
+        words = [w for w in words_of(name) if len(w) > 2]
+        if words and all(w in qset for w in words):
+            out[sid] = name
+    return out
+
+
+def meaning_hits(con, question, boost_services=None):
     """The passages whose meaning sits closest to the question's."""
     q = embed_question(question)
     if q is None:
@@ -288,7 +311,16 @@ def meaning_hits(con, question):
     if mat is None:
         return None                       # index absent — not built yet
     sims = mat @ q
-    order = sims.argsort()[::-1][:MEANING_HITS]
+    order = list(sims.argsort()[::-1][:MEANING_HITS])
+    if boost_services:
+        # a ruled name was asked about: that person's own services join
+        # the evidence hunt — their closest passages, question-ranked
+        for sid in boost_services:
+            idxs = [i for i, r in enumerate(rows) if r["service_id"] == sid]
+            idxs.sort(key=lambda i: -sims[i])
+            for i in idxs[:3]:
+                if i not in order:
+                    order.append(i)
     hits = []
     for i in order:
         r = rows[int(i)]
@@ -338,13 +370,19 @@ def gather_evidence(question):
         for w in singles:
             collect(w, len(w) / 3.0)
 
-        heard_meaning = meaning_hits(con, question)
+        ruled = ruled_speaker_services(qwords)
+        heard_meaning = meaning_hits(con, question, set(ruled) or None)
         for h in (heard_meaning or []):
             v = scored.setdefault(h["segment_id"],
                                   {"segment": h, "score": 0.0,
                                    "matched": []})
             v["score"] += 22.0 * h["sim"]
             v["matched"].append("meaning")
+            if h["service_id"] in ruled:
+                v["score"] += 15.0          # the asked-about person's own service
+                v["matched"].append("ruled speaker")
+                if not h.get("speaker"):
+                    h["speaker"] = ruled[h["service_id"]] + " (ruled)"
 
         if speaker:
             for v in scored.values():
