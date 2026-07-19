@@ -20,8 +20,10 @@ import os, sqlite3, datetime
 SOURCES = [
     ("/Users/saba/Archive/Sermons.db",
      "/Volumes/Data/Video Archive/SQL Files/backups"),
+    ("/Users/saba/Archive/Archive_Suggestions.db",
+     "/Volumes/Data/Video Archive/SQL Files/backups"),
     ("/Volumes/Data/Video Archive/SQL Files/EVM.db",
-     os.path.expanduser("~/Desktop/DB Vault")),
+     os.path.expanduser("~/Vault")),   # off the synced Desktop by ruling
 ]
 
 
