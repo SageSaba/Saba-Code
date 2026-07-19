@@ -92,8 +92,8 @@ def main():
     log(f"{len(names)} sessions in the crate")
     for name in names:
         m = re.match(r"^(\d+)\s+(.+)\.mp3$", name)
-        if not m:
-            log(f"{name}: no session number — left for Saba's ruling")
+        if not m or not (1 <= int(m.group(1)) <= 63):
+            log(f"{name}: no sane session number — left for Saba's ruling")
             continue
         n = int(m.group(1))
         date = (DAY0 + dt.timedelta(days=(n - 1) // 3)).isoformat()
