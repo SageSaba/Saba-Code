@@ -45,6 +45,51 @@ OLLAMA_URL = "http://localhost:11434/api/embed"
 EMBED_MODEL = "nomic-embed-text"   # must match what meanings_build.py used
 MEANING_HITS = 12
 
+# The ruling layer: approved suggestions (and ONLY approved) ride into
+# answers — the teacher's word outranks the machine, after review.
+SUG_DB = "/Users/saba/Archive/Archive_Suggestions.db"
+
+
+def approved_rulings(service_ids):
+    """Approved rulings touching these services -> (notes, speaker_map)."""
+    if not service_ids or not os.path.exists(SUG_DB):
+        return [], {}
+    try:
+        con = sqlite3.connect(SUG_DB, timeout=10)
+        con.row_factory = sqlite3.Row
+        marks = ",".join("?" * len(service_ids))
+        rows = con.execute(
+            f"SELECT * FROM suggestions WHERE status='approved' "
+            f"AND service_id IN ({marks})", list(service_ids)).fetchall()
+        con.close()
+    except sqlite3.Error:
+        return [], {}
+    notes, speakers = [], {}
+    for r in rows:
+        if r["suggestion_type"] == "speaker" and r["segment_id"] is None:
+            speakers[r["service_id"]] = r["proposed_value"]
+        notes.append(
+            f"- [{r['suggestion_type']}] service {r['service_id']}"
+            + (f" seg {r['segment_id']}" if r["segment_id"] else "")
+            + f": {r['proposed_value']}"
+            + (f" — {r['explanation']}" if r["explanation"] else "")
+            + f" (ruled by {r['reviewed_by']})")
+    return notes, speakers
+
+
+def log_question(question, answer, receipts):
+    try:
+        con = sqlite3.connect(SUG_DB, timeout=10)
+        con.execute(
+            "INSERT INTO questions (question_text, ai_provider,"
+            " answer_text, receipts) VALUES (?,?,?,?)",
+            (question, "claude (ask-the-archive 8768)", answer,
+             json.dumps(receipts, ensure_ascii=False)[:8000]))
+        con.commit()
+        con.close()
+    except sqlite3.Error:
+        pass   # journaling must never break an answer
+
 
 class AskError(Exception):
     def __init__(self, status, message):
@@ -359,6 +404,8 @@ QUESTION: {question}
 
 {note}
 
+{rulings}
+
 EVIDENCE:
 {evidence}
 """
@@ -379,9 +426,15 @@ def format_evidence(best):
     return "\n".join(parts)
 
 
-def ask_ai(question, best, note):
+def ask_ai(question, best, note, rulings=None):
+    rtext = ""
+    if rulings:
+        rtext = ("HOUSE RULINGS (approved by trusted reviewers — these "
+                 "OUTRANK anything contrary in the transcripts):\n"
+                 + "\n".join(rulings))
     prompt = PROMPT.format(question=question,
                            note=("NOTE: " + note) if note else "",
+                           rulings=rtext,
                            evidence=format_evidence(best))
     try:
         run = subprocess.run(
@@ -466,7 +519,14 @@ class Handler(BaseHTTPRequestHandler):
                                 "different words, or fewer of them.",
                                 "receipts": [], "note": None})
                 return
-            answer = ask_ai(question, best, note)
+            svc_ids = {v["segment"]["service_id"] for v in best}
+            rulings, ruled_speakers = approved_rulings(svc_ids)
+            for v in best:
+                seg = v["segment"]
+                if not seg["speaker"] and seg["service_id"] in ruled_speakers:
+                    seg["speaker"] = (ruled_speakers[seg["service_id"]]
+                                      + " (ruled)")
+            answer = ask_ai(question, best, note, rulings)
             receipts = [
                 {"date": v["segment"]["date"],
                  "title": v["segment"]["title"],
@@ -475,6 +535,7 @@ class Handler(BaseHTTPRequestHandler):
                  "text": v["segment"]["text"]}
                 for v in best
             ]
+            log_question(question, answer, receipts)
             self.send_json({"answer": answer, "receipts": receipts,
                             "note": note})
         except AskError as e:
