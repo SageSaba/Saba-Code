@@ -5,9 +5,10 @@ the James Doss teachings, spring 2023) — downloaded with their YouTube
 transcripts and entered as Services.
 
 Dating law: a date written in the TITLE wins (day-precise: 06.04.2023,
-7.10.22, "April 16, 2023"). A title with no date falls to the upload
-stamp in the filename prefix — month-honest only (YYYY-MM), source
-named, per the stamp rung. Org TRCF by the channel's own name;
+7.10.22, "April 16, 2023"). A title with no date is 'undated' —
+Saba's rung, ruled 2026-07-18: AN UPLOAD STAMP NEVER DATES A SERVICE
+(YouTube received it then; nobody preached it then). Undated rows
+await testimony from whoever made the upload. Org TRCF by the channel's own name;
 re-ruling is Saba's. srt lines -> RawSegments, real clocks, no speaker
 claimed. Restartable; backup at start.
 """
@@ -81,8 +82,9 @@ def main():
         date = date_from_title(title)
         src = "title (TRCF YouTube)"
         if not date:
-            date = f"{m.group(1)}-{m.group(2)}"   # month-honest upload stamp
-            src = "upload stamp, month-honest (TRCF YouTube)"
+            date = "undated"   # upload stamps never date a service
+            src = ("filename (TRCF YouTube) — upload stamp rejected as "
+                   "date evidence; awaiting the channel keeper's testimony")
         srt = os.path.join(FOLDER, os.path.splitext(name)[0] + ".en.srt")
         lines = parse_srt(srt) if os.path.exists(srt) else []
         cur = db.execute(
