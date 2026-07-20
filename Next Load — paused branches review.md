@@ -123,6 +123,21 @@ Present this plan → Saba says go (per patch) → Patch 1, tests, show → his 
 
 ---
 
+# DESIGN CAPTURED — the Stories layer (Saba, 2026-07-20: "We need to connect stories if we can"; awaiting his go)
+*A story is a thread that runs ACROSS services — told, sung, reviewed, retold over decades. The book keeps services; the Stories layer keeps the threads.*
+
+**The shape:** a Stories table (story name + Saba's note on what it is) and StoryMoments linking each story to its tellings — service + timestamp + kind (telling / song / review / mention / GAP). A GAP moment is a telling the book lacks but a witness remembers (kind, date, witness) — connecting stories is how missing wings get found (the Carpenter's Wednesday found the silent year).
+
+**How connections are made:** the machine SUGGESTS (the meaning index hunts kindred passages — same story, different words, different decades); the keeper RULES (suggestion door, teacher outranks machine). Curators with seats (Elizabeth, the CF curator) can suggest on their own wings.
+
+**What it feeds:** a story's whole thread becomes one Portion (all its tellings, timestamped); the viewer could walk a story across the years; "review the review to increase faith" (Saba's own board) becomes a button.
+
+**First two threads, found on paper 2026-07-20 (not yet in any table):**
+1. **The Carpenter's Story** — 1997-04-02 WOG040297AM001 @ 23:24 (Brother John sings it, after Helm reviews suffering); 2022-06-10 service 2528 @ 8:40 (Elizabeth reviews it at Reconnection — Saba installing the shower at Hotel Hallelujah, "of course, he's a carpenter"); GAP: Saba's own Wednesday-PM telling, 2022-06-08, inside the silent year (witness: Saba, 2026-07-20).
+2. **Loretta's Healing (the burning and the healing)** — 1976-06-22 service 1101 @ 1:23:04 (the burning: grease fire after church, curtains carried out, burned arm, "she was not catching fire"); 1975-06-23 service 1066 @ 1:10:07 (sister Loretta at the waiting); HUNT: the healing's review in later services; LIVING: Saba's Freeform board "Review Loretta's Healing," 2026 — fifty years of reviewing the review.
+
+---
+
 # TO DO — the DV tape era (standing project, added 2026-07-20)
 *Saba: "I have years on the DV." A whole wing of the book still on cassette; the Sukkot 2013 videos likely among them. Full design in memory (dv-tape-era.md).*
 
