@@ -105,6 +105,24 @@ Present this plan → Saba says go (per patch) → Patch 1, tests, show → his 
 
 ---
 
+# DESIGN CAPTURED — Collection preselect buttons (Saba, 2026-07-20; awaiting his go to build)
+*Saba's word: "maybe a preselect button that says CF Archive, RFOD Tapes from Saba, TRCF, EVM." Choosable gates on the asking screens — the asker picks which wing of the book supplies evidence. Fits the spread law (machine offers, never blends) and the gates design (EVM is a classification, not a top).*
+
+**The shape:** buttons above the search/ask box — press one (or several) and the evidence hunt stays inside those collections. All-off = whole book, as today.
+
+**The mapping layer (the real work):** a Collections map — collection name → the org banners (and title patterns) it gathers. Today's ~80 org values are two kinds mixed: true houses (SDCF 954, TRCF 846, PCCF 214, RFOD 167, XWalls 31, EVM 5...) and tape-crate labels ("Tape 10 RFOD", "Tape 3 DCF", "Tape 05 Louisville KY", per-tape rows). The map gathers the fragments under their doors WITHOUT rewriting any row's org — a law over the rows, not row-tending.
+
+**Draft mapping for Saba's correction:**
+- **RFOD Tapes from Saba** → RFOD + every "Tape NN RFOD" + Music Tapes RFOD + likely the WoG/Helm/DCF/Ashboro/Louisville tape sets (his crates — his ruling on the edges)
+- **TRCF** → TRCF (incl. Zoom era)
+- **EVM** → the EVM classification (make_evm_subset.py already knows this cut?) — NOT just the 5 rows bannered "EVM"
+- **CF Archive** → nothing yet — that wing imports later (the 5,800-video channel); button arrives with the wing
+- (Open: where do SDCF 954, PCCF 214, XWalls, and the small houses stand — more buttons, or an "Everything else" door?)
+
+**Where the buttons live:** Ask the Archive first (the evidence hunt); possibly the viewer search too. Patch discipline: named patch, Saba's go first.
+
+---
+
 # TO DO — the DV tape era (standing project, added 2026-07-20)
 *Saba: "I have years on the DV." A whole wing of the book still on cassette; the Sukkot 2013 videos likely among them. Full design in memory (dv-tape-era.md).*
 
