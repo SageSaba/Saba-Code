@@ -95,7 +95,7 @@ Ten commits: Transcript Exporter, first standalone HTML transcript, Sermon Reade
 **Merge to main only on Saba's word.**
 
 ## Rulings queue (Saba's calls, no branches needed)
-1. The stray `20130911 1pm.mp3` — where it sits in the Sukkot calendar.
+1. ~~The stray `20130911 1pm.mp3`~~ — **RULED 2026-07-20: "Shabbath."** Seated as session 20 (2013-09-11, 1pm) — the map's blank line, the restful session (Elizabeth singing the 23rd Psalm in Hebrew, dreams and visions, the hall of remembrance). Renamed `20 Shabbath.mp3`, whisper-read, entered by `bring_sukkot_home.py`. Still open: the 1pm line in *Contents of 21 days.docx* is Saba's to fill in his own hand.
 2. `Summaries.json/md` — git, Desktop, or Vault.
 3. The loose Word docs in the repo root — track them, or move to ~/Vault under the no-cloud law.
 4. After both patches merge: retire the two emptied branches, or leave them standing as history.
