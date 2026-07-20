@@ -161,6 +161,13 @@ Build order when Saba says go: Phase B first (the inquiry pass gives Phase A its
 
 ---
 
+# DESIGN CAPTURED — the Family Gate (Saba 2026-07-20; helper: Discord friend "The Crypt Keeper")
+*Goal: the archive reachable OUTSIDE the house — family first, each asking with their own AI or the house's. First rung of [[end-goal-open-archive]].*
+- **Rung 1 (recommended, private): Tailscale.** Free mesh VPN; Saba + family + Crypt Keeper install it; family opens the viewer (8765) and Ask the Archive (8768) from anywhere as if at home. No public exposure, no passwords built, nothing on the open internet. Crypt Keeper can help family install.
+- **Rung 2 (later, public): Cloudflare Tunnel** in front of the connector (8766, read-only evidence API) — the "any AI asks the well" gate, with the gates/ownership rules built first.
+- **Laws:** Sermons.db read-only from outside; writes only via suggestion door; family gate before public gate; Saba rules who connects (gates-design).
+- **Next step: Saba talks to The Crypt Keeper** (draft message below in chat, 2026-07-20). Build on Saba's go.
+
 # TO DO — the DV tape era (standing project, added 2026-07-20)
 *Saba: "I have years on the DV." A whole wing of the book still on cassette; the Sukkot 2013 videos likely among them. Full design in memory (dv-tape-era.md).*
 
