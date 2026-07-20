@@ -19,6 +19,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 DB_PATH = "/Users/saba/Archive/Sermons.db"
+SUGGESTIONS_DB = "/Users/saba/Archive/Archive_Suggestions.db"
 VIDEO_ROOT = "/Volumes/Data/Video Archive"
 PORT = 8765
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -249,6 +250,106 @@ def service_context(con, service_id, t):
     ]
 
 
+def all_sermons():
+    """Every sermon in the Parts table, exactly as stored — no retitling."""
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
+    try:
+        if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
+                           "AND name='Parts'").fetchone():
+            return None
+        rows = con.execute(
+            """
+            SELECT p.ID AS part_id, p.service_id, p.person, p.title,
+                   p.start, p.end,
+                   s.preach_date, s.title AS service_title, s.media_path
+            FROM Parts p JOIN Services s ON s.ID = p.service_id
+            WHERE p.kind = 'sermon'
+            ORDER BY s.preach_date, p.start
+            """).fetchall()
+        return [
+            {"part_id": r["part_id"], "service_id": r["service_id"],
+             "person": r["person"] or "", "title": r["title"] or "",
+             "date": r["preach_date"],
+             "service_title": r["service_title"] or "",
+             "start": round(time_to_seconds(r["start"]), 2),
+             "end": round(time_to_seconds(r["end"]), 2),
+             "has_video": bool(r["media_path"])
+                          and os.path.exists(r["media_path"])}
+            for r in rows
+        ]
+    finally:
+        con.close()
+
+
+def parts_of_service(service_id):
+    """One service's parts (songs and sermons), as stored, in time order."""
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
+    try:
+        if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
+                           "AND name='Parts'").fetchone():
+            return None
+        rows = con.execute(
+            "SELECT ID, kind, person, title, start, end FROM Parts "
+            "WHERE service_id = ? ORDER BY start", (service_id,)).fetchall()
+        return [
+            {"part_id": r["ID"], "kind": r["kind"],
+             "person": r["person"] or "", "title": r["title"] or "",
+             "start": round(time_to_seconds(r["start"]), 2),
+             "end": round(time_to_seconds(r["end"]), 2)}
+            for r in rows
+        ]
+    finally:
+        con.close()
+
+
+def marks_con():
+    """Marks are writes, so they live in Archive_Suggestions.db —
+    Sermons.db stays read-only per the house law."""
+    con = sqlite3.connect(SUGGESTIONS_DB)
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS marks ("
+        "  id INTEGER PRIMARY KEY,"
+        "  service_id INTEGER NOT NULL,"
+        "  seconds REAL NOT NULL,"
+        "  note TEXT DEFAULT '',"
+        "  created_at TEXT DEFAULT (datetime('now', 'localtime'))"
+        ")"
+    )
+    return con
+
+
+def save_mark(service_id, seconds, note):
+    con = sqlite3.connect(DB_PATH)
+    row = con.execute(
+        "SELECT preach_date, title FROM Services WHERE ID = ?",
+        (service_id,)).fetchone()
+    con.close()
+    if not row:
+        return None
+    mcon = marks_con()
+    cur = mcon.execute(
+        "INSERT INTO marks (service_id, seconds, note) VALUES (?,?,?)",
+        (service_id, seconds, note))
+    mcon.commit()
+    mark_id = cur.lastrowid
+    mcon.close()
+    return {"id": mark_id, "service_id": service_id,
+            "seconds": seconds, "time": seconds_to_time(seconds),
+            "date": row[0], "title": row[1] or "", "note": note}
+
+
+def marks_of_service(service_id):
+    mcon = marks_con()
+    rows = mcon.execute(
+        "SELECT id, seconds, note, created_at FROM marks "
+        "WHERE service_id = ? ORDER BY seconds", (service_id,)).fetchall()
+    mcon.close()
+    return [{"id": r[0], "seconds": r[1], "time": seconds_to_time(r[1]),
+             "note": r[2], "created_at": r[3]} for r in rows]
+
+
 def media_path_for(service_id):
     con = sqlite3.connect(DB_PATH)
     row = con.execute(
@@ -294,6 +395,52 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        if parsed.path == "/screen":
+            try:
+                with open(os.path.join(HERE, "screen.html"), "rb") as f:
+                    body = f.read()
+            except OSError:
+                self.send_error(500, "screen.html missing next to viewer.py")
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        if parsed.path == "/api/sermons":
+            try:
+                sermons = all_sermons()
+            except sqlite3.Error as e:
+                self.send_json({"error": str(e)}, 500)
+                return
+            if sermons is None:
+                self.send_json({"error": "Parts table not found in the "
+                                         "database."}, 500)
+            else:
+                self.send_json({"sermons": sermons})
+            return
+
+        if parsed.path == "/api/parts":
+            qs = urllib.parse.parse_qs(parsed.query)
+            try:
+                service_id = int(qs.get("service_id", ["0"])[0])
+            except ValueError:
+                self.send_json({"error": "bad service_id"}, 400)
+                return
+            try:
+                parts = parts_of_service(service_id)
+            except sqlite3.Error as e:
+                self.send_json({"error": str(e)}, 500)
+                return
+            if parts is None:
+                self.send_json({"error": "Parts table not found in the "
+                                         "database."}, 500)
+            else:
+                self.send_json({"parts": parts})
+            return
+
         if parsed.path == "/api/search":
             q = urllib.parse.parse_qs(parsed.query).get("q", [""])[0].strip()
             if len(q) < 2:
@@ -324,12 +471,49 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"lines": lines})
             return
 
+        if parsed.path == "/api/marks":
+            qs = urllib.parse.parse_qs(parsed.query)
+            try:
+                service_id = int(qs.get("service_id", ["0"])[0])
+            except ValueError:
+                self.send_json({"error": "bad service_id"}, 400)
+                return
+            try:
+                self.send_json({"marks": marks_of_service(service_id)})
+            except sqlite3.Error as e:
+                self.send_json({"error": str(e)}, 500)
+            return
+
         m = re.fullmatch(r"/video/(\d+)", parsed.path)
         if m:
             self.serve_video(int(m.group(1)))
             return
 
         self.send_error(404)
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path != "/api/mark":
+            self.send_error(404)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            data = json.loads(self.rfile.read(length) or b"{}")
+            service_id = int(data["service_id"])
+            seconds = float(data["seconds"])
+            note = str(data.get("note", ""))[:500]
+        except (KeyError, ValueError, json.JSONDecodeError):
+            self.send_json({"error": "bad mark"}, 400)
+            return
+        try:
+            saved = save_mark(service_id, seconds, note)
+        except sqlite3.Error as e:
+            self.send_json({"error": str(e)}, 500)
+            return
+        if saved is None:
+            self.send_json({"error": "no such service"}, 404)
+        else:
+            self.send_json({"saved": saved})
 
     def serve_video(self, service_id):
         path = media_path_for(service_id)

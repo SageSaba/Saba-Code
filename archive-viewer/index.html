@@ -76,16 +76,16 @@
   video { display: block; width: 100%; aspect-ratio: 16/9; background: #000; }
   .svc-line { padding: 5px 10px; font-size: 12px; color: var(--ink-2); border-bottom: 1px solid var(--line); }
 
-  /* the whole service transcript — about 5 lines tall, click any line to jump */
-  .context { max-height: 120px; overflow-y: auto; border-bottom: 1px solid var(--line); }
+  /* the whole service transcript — about 14 lines tall, click any line to jump */
+  .context { max-height: 360px; overflow-y: auto; border-bottom: 1px solid var(--line); }
   .ctx-line {
-    display: grid; grid-template-columns: 56px 1fr; gap: 8px; width: 100%;
+    display: grid; grid-template-columns: 74px 1fr; gap: 12px; width: 100%;
     text-align: left; padding: 3px 10px; border: none; background: transparent;
-    color: var(--ink); font: inherit; font-size: 13px; line-height: 1.35; cursor: pointer;
+    color: var(--ink); font: inherit; font-size: 15px; line-height: 1.5; cursor: pointer;
   }
   .ctx-line:hover { background: var(--field); }
   .ctx-line.here { background: var(--accent-soft); font-weight: 600; }
-  .ctx-line .t { font-variant-numeric: tabular-nums; color: var(--accent); }
+  .ctx-line .t { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; font-size: 13px; padding-top: 2px; }
   .ctx-line .who { color: var(--ink-2); font-size: 11px; }
   .controls { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; align-items: center; justify-content: center; }
   .controls button {
@@ -129,6 +129,7 @@
         <button id="fwd5">5 sec »</button>
         <button id="fwd5m">5 min »</button>
         <button id="fwd15m">15 min »</button>
+        <button id="markBtn" title="Save this moment with its place in the archive">✚ Mark</button>
       </div>
     </div>
   </div>
@@ -141,7 +142,38 @@
   const video = document.getElementById("video");
   const svcLine = document.getElementById("svcLine");
   const playBtn = document.getElementById("playBtn");
+  const markBtn = document.getElementById("markBtn");
   let currentServiceId = null;
+
+  markBtn.addEventListener("click", async () => {
+    if (currentServiceId === null) {
+      svcLine.textContent = "Nothing to mark — load a service first.";
+      return;
+    }
+    const seconds = video.currentTime;
+    const note = window.prompt(
+      "Mark " + fmt(seconds) + " — note (who/what you see), or leave blank:", "");
+    if (note === null) return;  // cancelled
+    try {
+      const res = await fetch("/api/mark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ service_id: currentServiceId,
+                               seconds: seconds, note: note.trim() })
+      });
+      const data = await res.json();
+      if (data.saved) {
+        const s = data.saved;
+        svcLine.textContent = "✚ Marked " + s.time + " · " + s.date +
+          (s.title ? " — " + s.title : "") +
+          (s.note ? "  ·  “" + s.note + "”" : "") + "  (saved)";
+      } else {
+        svcLine.textContent = "Mark failed: " + (data.error || "unknown");
+      }
+    } catch (e) {
+      svcLine.textContent = "Mark failed: " + e;
+    }
+  });
 
   const esc = s => s.replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
   const fmt = s => {
@@ -185,7 +217,8 @@
       b.innerHTML =
         '<span class="t">' + fmt(h.start) + '</span>' +
         '<span><span class="txt">' + highlight(h.text, query) + '</span>' +
-        '<div class="meta">' + esc(h.date) + (h.title ? " · " + esc(h.title) : "") +
+        '<div class="meta">' + esc(h.date) +
+        (h.title && h.title !== h.speaker ? " · " + esc(h.title) : "") +
         (h.speaker ? " · " + esc(h.speaker) : "") + (h.has_video ? "" : " · (no video file)") + "</div></span>";
       b.addEventListener("click", () => selectHit(b, h));
       rowsEl.appendChild(b);
@@ -204,11 +237,15 @@
       const data = await res.json();
       ctxEl.innerHTML = "";
       ctxLines = [];
+      let prevSpeaker = null;
       for (const line of (data.lines || [])) {
         const b = document.createElement("button");
         b.className = "ctx-line";
+        // Name a voice once when it changes, then let the lines flow clean.
+        const who = line.speaker && line.speaker !== prevSpeaker ? line.speaker : "";
+        prevSpeaker = line.speaker || prevSpeaker;
         b.innerHTML = '<span class="t">' + fmt(line.start) + '</span><span>' + esc(line.text) +
-          (line.speaker ? ' <span class="who">— ' + esc(line.speaker) + '</span>' : "") + '</span>';
+          (who ? ' <span class="who">— ' + esc(who) + '</span>' : "") + '</span>';
         b.addEventListener("click", () => {
           video.currentTime = Math.max(0, line.start - 1);
           video.play();
