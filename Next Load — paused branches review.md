@@ -102,3 +102,15 @@ Ten commits: Transcript Exporter, first standalone HTML transcript, Sermon Reade
 
 ## Order of the load
 Present this plan → Saba says go (per patch) → Patch 1, tests, show → his word → Patch 2, tests, show → his word → merges → rulings 1–4 as he pleases.
+
+---
+
+# TO DO — the DV tape era (standing project, added 2026-07-20)
+*Saba: "I have years on the DV." A whole wing of the book still on cassette; the Sukkot 2013 videos likely among them. Full design in memory (dv-tape-era.md).*
+
+1. **Saba:** find the tape boxes; read the labels — dates, brand, MiniDV vs full-size vs Digital8. **Buy nothing before this.**
+2. Early cheap purchase (any time): the adapter chain, ~$80–100 — Thunderbolt 3→2 + Thunderbolt 2→FireWire 800 + FW800→4-pin cable. Generic Apple gear, serves any player.
+3. Format confirmed → buy a **used Sony DSR-11 deck** (~$300–800; plays both tape sizes; seller with returns). Claude hunts the right unit that week.
+4. Capture via DaVinci Resolve (free) over FireWire — byte-for-byte digital, no loss. Real-time: one tape per sitting, a background season like whisper.
+5. **First captures: Sukkot 2013** — transcripts already in the book; the videos need only their media_path seats. Then by Saba's ruling.
+6. The rest walk the proven road: capture → Services row → whisper → RawSegments. Tapes keep dry and cool; the tapes remain the originals — raw is the base.
