@@ -123,7 +123,26 @@ Present this plan → Saba says go (per patch) → Patch 1, tests, show → his 
 
 ---
 
-# DESIGN CAPTURED — the Stories layer (Saba, 2026-07-20: "We need to connect stories if we can"; awaiting his go)
+# DESIGN CAPTURED — GOD STORIES: the hunt and the Inquiry database (Saba, 2026-07-20; awaiting his go)
+*The Fellowship's own term (first in the book: Sukkot 2013 Shabbat Conversation, "Review a God story. Share with somebody what God has done."). The Stories layer's true name. Two planned works:*
+
+## Phase A — the filter series: find where the God stories lie
+Run the whole corpus through stacked filters; each hit is a CANDIDATE, never a conclusion:
+1. **The explicit lattice** — the 79 "God stor…" mentions: anchors where stories are told or called for nearby.
+2. **Testimony ground** — Parts already re-kinded as TESTIMONY (who_is_speaking.py) are prime soil.
+3. **Story-language filters** — narrative openers ("I remember when", "years ago", "God told me", "the Lord led", "we prayed and…") + resolution words (healed, provided, answered, opened, delivered).
+4. **The meaning index** — kindred-passage hunts seeded from KNOWN God stories (Loretta's, the Carpenter's) to find unlabeled tellings in other words, other decades.
+Output: candidate moments (service, span, snippet, which filters hit) → reviewed through the suggestion door → confirmed ones become God Stories + StoryMoments. **On "who it is" (Saba: we may not know, but we should know HOW to figure it out) — the evidence ladder:** (1) named in surrounding lines per the who_is_speaking law → (2) ruled speakers → (3) subject named inside the story ("Loretta") → (4) witness ruling (Saba/curators remember) → (5) honestly unnamed, waiting. Unnamed stays unnamed — it creates a pursuit.
+
+## Phase B — the context pass: the INQUIRY DATABASE
+Walk EVERY entry and let CONTEXT declare who is speaking and **who is being spoken to** — "Elizabeth, would you sing", "Brother John's going to sing", "Jerry, would you stand", "Ms. Terry, share one of your God stories." Kept in a **NEW separate database — Inquiry.db (~/Archive)**, never inside Sermons.db:
+- Row = service, timestamp, person, role (**speaking / addressed / named-present**), the evidence line + its own timestamp, confidence.
+- Laws inherited from who_is_speaking.py: evidence beside every claim; ambiguity writes nothing; hand rulings outrank and survive re-runs; RawSegments never written; machine rows refresh, ruled rows stand.
+- What it becomes: the people-inquiry layer — "every moment Jerry was asked to pray", "when was Elizabeth addressed", "who was present in the 1984 waiting" — answered with receipts. Feeds speaker rulings, the memorial roll (the gone appearing across decades), Phase A's who-ladder, and Ask the Archive's person questions.
+
+Build order when Saba says go: Phase B first (the inquiry pass gives Phase A its who-ladder), then the filters. Patch discipline throughout; every write preceded by backup; pilot on one era before the whole book.
+
+# DESIGN CAPTURED — the Stories layer (Saba, 2026-07-20: "We need to connect stories if we can"; awaiting his go — TRUE NAME: God Stories, see above)
 *A story is a thread that runs ACROSS services — told, sung, reviewed, retold over decades. The book keeps services; the Stories layer keeps the threads.*
 
 **The shape:** a Stories table (story name + Saba's note on what it is) and StoryMoments linking each story to its tellings — service + timestamp + kind (telling / song / review / mention / GAP). A GAP moment is a telling the book lacks but a witness remembers (kind, date, witness) — connecting stories is how missing wings get found (the Carpenter's Wednesday found the silent year).
