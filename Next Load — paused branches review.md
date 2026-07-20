@@ -116,7 +116,7 @@ Present this plan → Saba says go (per patch) → Patch 1, tests, show → his 
 - **RFOD Tapes from Saba** → RFOD + every "Tape NN RFOD" + Music Tapes RFOD + likely the WoG/Helm/DCF/Ashboro/Louisville tape sets (his crates — his ruling on the edges)
 - **TRCF** → TRCF (incl. Zoom era)
 - **EVM** → the EVM classification (make_evm_subset.py already knows this cut?) — NOT just the 5 rows bannered "EVM"
-- **CF Archive** → nothing yet — that wing imports later (the 5,800-video channel); button arrives with the wing
+- **CF Archive** → nothing yet — that wing imports later (the 5,800-video channel); button arrives with the wing. **Saba's ruling 2026-07-20: the CF Archive's curator gets their press** — the unknown kindred archivist (@thecfarchive7816, maker possibly deceased, Facebook page linked from the channel) is to be named and honored when the wing comes in: credit carried on the wing itself (its button/door and its services' source lines), and a candidate spot on the memorial/VIP roll. Saba may attempt contact via the Facebook page — their story belongs with their work.
 - (Open: where do SDCF 954, PCCF 214, XWalls, and the small houses stand — more buttons, or an "Everything else" door?)
 
 **Where the buttons live:** Ask the Archive first (the evidence hunt); possibly the viewer search too. Patch discipline: named patch, Saba's go first.
