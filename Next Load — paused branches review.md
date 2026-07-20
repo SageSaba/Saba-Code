@@ -132,6 +132,10 @@ Present this plan → Saba says go (per patch) → Patch 1, tests, show → his 
 
 **What it feeds:** a story's whole thread becomes one Portion (all its tellings, timestamped); the viewer could walk a story across the years; "review the review to increase faith" (Saba's own board) becomes a button.
 
+**Third thread + a living door (Saba 2026-07-20): Jerry Keller's story about his dad** — like the Carpenter's Story; not told whole anywhere in the book, but the father is present in it: J.D. Keller named with the family at Waiting on God 1984-08-22 @ 23:14; "it was your father, and he said, when Jesus…" 1992-06-21 @ 13:16; "his father told me…" 1995-04-02 @ 1:25:00. **Jerry lives — the anchor telling can be ASKED FOR and recorded new**, then joined to his father's 1984 presence. First living-witness capture of the Stories layer.
+
+**Tape lead recorded (Saba): seven years of Palm Beach Gardens video, last held by Jerry's cousin a few years ago** — the book has only 4 PBGCF services; details in memory (dv-tape-era). Saba's move: ask Jerry for the cousin.
+
 **First two threads, found on paper 2026-07-20 (not yet in any table):**
 1. **The Carpenter's Story** — 1997-04-02 WOG040297AM001 @ 23:24 (Brother John sings it, after Helm reviews suffering); 2022-06-10 service 2528 @ 8:40 (Elizabeth reviews it at Reconnection — Saba installing the shower at Hotel Hallelujah, "of course, he's a carpenter"); GAP: Saba's own Wednesday-PM telling, 2022-06-08, inside the silent year (witness: Saba, 2026-07-20).
 2. **Loretta's Healing (the burning and the healing)** — 1976-06-22 service 1101 @ 1:23:04 (the burning: grease fire after church, curtains carried out, burned arm, "she was not catching fire"); 1975-06-23 service 1066 @ 1:10:07 (sister Loretta at the waiting); HUNT: the healing's review in later services; LIVING: Saba's Freeform board "Review Loretta's Healing," 2026 — fifty years of reviewing the review.
