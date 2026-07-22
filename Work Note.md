@@ -13,6 +13,9 @@
 - **THE SILENT YEAR (found 2026-07-20, via Saba's Carpenter's Story memory):** the book holds NO services from 2021-07-15 to 2022-06-08 — eleven months missing (Zoom-era tail; Wed+Sat were TRCF on Zoom). Saba remembers sharing the Carpenter's Story on the Wednesday PM before Elizabeth's 2022-06-10 telling (service 2528, ~8:40) — that Wednesday (2022-06-08) is in the gap. HUNT NEEDED: were the Zoom services recorded? Where do recordings live (Zoom cloud expires; local recordings folder; OneDrive; unsearched drives)? Saba's answer decides the hunt.
 
 ## STATUS: PAUSED (Saba on-site at 5pm, 2026-07-22 afternoon) — real progress, several open threads
+
+**⚠ LIVE EVIDENCE JUST ARRIVED (end of session):** A woman who was filmed at the meeting came to Saba's local church with Dr. Peck this past Sunday. She confirmed the real story: **Jerry was at the meeting, opened the book, and his finger touched his name as he was quoted.** This is NOT the Elizabeth Doss laughing story the AI generated in four-box.html — that answer is wrong. **Next session priority: find the video timestamp of Jerry's moment, create a link that jumps to it, file a ruling-layer correction in Archive_Suggestions.db, replace the false AI answer with the true story.**
+
 **The AI-drives-the-archive road that was blocked last night is now solved, for Claude specifically:** built `archive-viewer/mcp_server.py` (MCP bridge in front of the connector), proven live through a temporary Cloudflare tunnel + claude.ai custom connector ("Archive Well") — real archive answers, including finding Oliver Hogue's pierced-ear teaching. Full detail in [[archive-ai-connector]] memory and today's History.md entry.
 
 **Also built today, both on the real Desktop (not the worktree) at `~/Desktop/Archive Viewer/`:**
