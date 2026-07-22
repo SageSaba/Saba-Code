@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archive — One Box</title>
+<style>
+  :root {
+    --bg: #f3f3f0; --panel: #ffffff; --field: #eae9e5; --ink: #1d1d1f;
+    --ink-2: #6f6f74; --line: #d8d7d3; --accent: #2456c8; --accent-soft: #e3ebfb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161617; --panel: #222224; --field: #2d2d30; --ink: #f0f0f2;
+      --ink-2: #a0a0a6; --line: #3a3a3e; --accent: #6f9bff; --accent-soft: #24314f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    padding: 10px; color: var(--ink);
+    /* A solid, comfortable blue behind the whole program (placeholder for a
+       real graphic later). The boxes keep following light/dark on their own. */
+    background: #4a6fa5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.5;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+
+  .ask-row { display: flex; gap: 8px; }
+  #q {
+    flex: 1; min-height: 46px; background: var(--field); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 16px; color: var(--ink); resize: none;
+  }
+  #askBtn {
+    border: none; background: var(--accent); color: #fff; font: inherit; font-weight: 600;
+    border-radius: 8px; padding: 0 22px; cursor: pointer; min-width: 130px;
+  }
+  #askBtn.processing { background: var(--ink-2); cursor: wait; }
+  @keyframes procpulse { 50% { opacity: 0.55; } }
+  #askBtn.processing { animation: procpulse 1.1s ease-in-out infinite; }
+  #status { font-size: 13px; color: var(--ink-2); min-height: 18px; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .panel-head {
+    padding: 6px 12px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 12px;
+    color: var(--ink-2); display: flex; justify-content: space-between; align-items: center;
+  }
+  #answer { padding: 14px 16px; white-space: pre-wrap; font-size: 15px; }
+  #answer.empty { color: var(--ink-2); font-size: 14px; }
+  .btn-copy {
+    border: 1px solid var(--line); background: var(--field); color: var(--ink);
+    border-radius: 6px; padding: 2px 12px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
+  }
+  .btn-copy:hover { background: var(--accent-soft); }
+  .btn-copy.done { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Receipts — the moments; clicking one plays the video there */
+  .receipt {
+    padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 13px; cursor: pointer;
+  }
+  .receipt:last-child { border-bottom: none; }
+  .receipt:hover { background: var(--accent-soft); }
+  .receipt .meta { color: var(--accent); font-weight: 700; font-size: 12px; }
+  .receipt .words { color: var(--ink-2); margin-top: 2px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* Refine strip */
+  #refine { display: none; }
+  #refine.show { display: block; }
+  .refine-head { padding: 8px 12px; font-size: 13px; color: var(--ink-2);
+    background: var(--accent-soft); border-bottom: 1px solid var(--line); }
+  .refine-row { display: flex; gap: 8px; padding: 10px 12px; }
+  #refineInput {
+    flex: 1; background: var(--field); border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 10px; font: inherit; color: var(--ink);
+  }
+  .btn-soft {
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    border-radius: 8px; padding: 0 16px; cursor: pointer; font: inherit;
+  }
+  #newBtn { border: none; background: var(--ink-2); color: #fff; }
+
+  /* Video overlay — the player sits in a fixed 16:9 box so every service,
+     whatever its native size, shows at the same consistent dimensions. */
+  #videoView {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100;
+    flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  }
+  #videoView.active { display: flex; }
+  .video-frame {
+    width: min(85vw, 960px); aspect-ratio: 16 / 9;
+    background: #000; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  #videoPlayer { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
+  .video-hint { color: #ccc; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="ask-row">
+    <textarea id="q" autofocus placeholder="Ask your archive anything..."></textarea>
+    <button id="askBtn">Ask</button>
+  </div>
+  <div id="status"></div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span>Answer</span>
+      <button class="btn-copy" id="copyBtn" hidden>Copy</button>
+    </div>
+    <div id="answer" class="empty">Ask above. The archive is searched, then Claude answers from what it finds.</div>
+  </div>
+
+  <div class="panel" id="receiptsPanel" hidden>
+    <div class="panel-head">The moments it stands on — click one to watch</div>
+    <div id="receipts"></div>
+  </div>
+
+  <div class="panel" id="refine">
+    <div class="refine-head">Want to refine this search? Add a name, a date, or narrow the question.</div>
+    <div class="refine-row">
+      <input id="refineInput" placeholder="e.g. only in 2020, or only Jerry Keller...">
+      <button class="btn-soft" id="refineBtn">Refine</button>
+      <button class="btn-soft" id="newBtn">New question</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="videoView">
+  <div class="video-frame">
+    <video id="videoPlayer" controls></video>
+  </div>
+  <div class="video-hint">Press ESC to return to your answer</div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+  const ASK = "http://127.0.0.1:8768/ask";
+  const CONNECTOR = "http://127.0.0.1:8766";
+  const VIEWER = "http://localhost:8765";
+
+  let lastQuestion = "";
+
+  function resetButton() {
+    $("askBtn").disabled = false;
+    $("askBtn").classList.remove("processing");
+    $("askBtn").textContent = "Ask";
+  }
+
+  async function ask(question) {
+    if (question.length < 3) { $("status").textContent = "Type a question first."; return; }
+    lastQuestion = question;
+    $("askBtn").disabled = true;
+    $("askBtn").classList.add("processing");
+    $("askBtn").textContent = "Processing…";
+    $("answer").className = "empty";
+    $("answer").textContent = "…";
+    $("receiptsPanel").hidden = true;
+    $("refine").classList.remove("show");
+    $("status").textContent = "Searching the archive…";
+    let d;
+    try {
+      const res = await fetch(ASK, { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }) });
+      d = await res.json();
+    } catch {
+      $("status").textContent = "Could not reach Ask the Archive (port 8768) — is it running?";
+      resetButton();
+      return;
+    }
+    resetButton();
+    if (d.error) { $("status").textContent = d.error; $("answer").textContent = ""; return; }
+    $("status").textContent = "";
+    $("answer").className = "";
+    $("answer").textContent = d.answer;
+    $("copyBtn").hidden = false;
+    $("copyBtn").classList.remove("done");
+    $("copyBtn").textContent = "Copy";
+
+    const receipts = d.receipts || [];
+    if (receipts.length) {
+      $("receiptsPanel").hidden = false;
+      $("receipts").innerHTML = receipts.map((r, i) =>
+        `<div class="receipt" data-i="${i}">
+          <div class="meta">${esc(r.date)}${r.title ? " · " + esc(r.title) : ""}${r.speaker ? " · " + esc(r.speaker) : ""} · at ${esc(r.start)}</div>
+          <div class="words">${esc(r.text)}</div>
+        </div>`).join("");
+      document.querySelectorAll(".receipt").forEach(el => {
+        el.addEventListener("click", () => watchReceipt(receipts[parseInt(el.dataset.i)]));
+      });
+    }
+    // Offer refinement after every answer
+    $("refine").classList.add("show");
+  }
+
+  // Click a moment → find its service, jump video to that second.
+  async function watchReceipt(r) {
+    $("status").textContent = "Finding that moment…";
+    try {
+      // Look the moment up by its exact words to get service_id + seconds.
+      const res = await fetch(CONNECTOR + "/search", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: r.text.split(/\s+/).slice(0, 6).join(" "), limit: 5 }) });
+      const d = await res.json();
+      const hit = (d.hits || []).find(h => h.date === r.date) || (d.hits || [])[0];
+      if (!hit) { $("status").textContent = "Could not locate that moment's video."; return; }
+      $("status").textContent = "";
+      playVideo(hit.service_id, hit.start_seconds ?? hmsToSec(r.start));
+    } catch {
+      $("status").textContent = "Could not reach the connector to find the video.";
+    }
+  }
+
+  function hmsToSec(hms) {
+    const p = String(hms).split(":").map(Number);
+    if (p.length === 3) return p[0]*3600 + p[1]*60 + p[2];
+    if (p.length === 2) return p[0]*60 + p[1];
+    return p[0] || 0;
+  }
+
+  function playVideo(serviceId, seconds) {
+    const player = $("videoPlayer");
+    player.src = VIEWER + "/video/" + serviceId;
+    player.addEventListener("loadedmetadata", () => {
+      player.currentTime = Math.max(0, (parseFloat(seconds) || 0) - 1);
+      player.play();
+    }, { once: true });
+    $("videoView").classList.add("active");
+  }
+
+  // ESC → back to the answer
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && $("videoView").classList.contains("active")) {
+      e.preventDefault();
+      $("videoView").classList.remove("active");
+      $("videoPlayer").pause();
+    }
+  });
+  $("videoView").addEventListener("click", e => {
+    if (e.target === $("videoView")) {
+      $("videoView").classList.remove("active");
+      $("videoPlayer").pause();
+    }
+  });
+
+  // Copy the answer to the clipboard
+  $("copyBtn").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText($("answer").textContent);
+      $("copyBtn").classList.add("done");
+      $("copyBtn").textContent = "Copied ✓";
+      setTimeout(() => {
+        $("copyBtn").classList.remove("done");
+        $("copyBtn").textContent = "Copy";
+      }, 1600);
+    } catch {
+      $("status").textContent = "Could not copy — select the text and use Cmd+C.";
+    }
+  });
+
+  // Ask flow
+  $("askBtn").addEventListener("click", () => ask($("q").value.trim()));
+  $("q").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask($("q").value.trim()); }
+  });
+
+  // Refine: fold the refinement into the original question
+  $("refineBtn").addEventListener("click", () => {
+    const extra = $("refineInput").value.trim();
+    if (!extra) return;
+    $("refineInput").value = "";
+    ask(lastQuestion + " — " + extra);
+  });
+  $("refineInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); $("refineBtn").click(); }
+  });
+
+  // New question: full reset
+  $("newBtn").addEventListener("click", () => {
+    $("q").value = "";
+    $("answer").className = "empty";
+    $("answer").textContent = "Ask above. The archive is searched, then Claude answers from what it finds.";
+    $("copyBtn").hidden = true;
+    $("receiptsPanel").hidden = true;
+    $("refine").classList.remove("show");
+    $("status").textContent = "";
+    $("q").focus();
+  });
+</script>
+</body>
+</html>
