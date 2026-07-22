@@ -12,7 +12,21 @@
 - **CONFIRMED 2026-07-20:** questions asked of the site ARE saved — Archive_Suggestions.db `questions` table, 9 journaled with full answers + receipts.
 - **THE SILENT YEAR (found 2026-07-20, via Saba's Carpenter's Story memory):** the book holds NO services from 2021-07-15 to 2022-06-08 — eleven months missing (Zoom-era tail; Wed+Sat were TRCF on Zoom). Saba remembers sharing the Carpenter's Story on the Wednesday PM before Elizabeth's 2022-06-10 telling (service 2528, ~8:40) — that Wednesday (2022-06-08) is in the gap. HUNT NEEDED: were the Zoom services recorded? Where do recordings live (Zoom cloud expires; local recordings folder; OneDrive; unsearched drives)? Saba's answer decides the hunt.
 
-## STATUS: STOPPED (Saba retiring, 2026-07-21 night) — AI-drives-the-archive road blocked
+## STATUS: PAUSED (Saba on-site at 5pm, 2026-07-22 afternoon) — real progress, several open threads
+**The AI-drives-the-archive road that was blocked last night is now solved, for Claude specifically:** built `archive-viewer/mcp_server.py` (MCP bridge in front of the connector), proven live through a temporary Cloudflare tunnel + claude.ai custom connector ("Archive Well") — real archive answers, including finding Oliver Hogue's pierced-ear teaching. Full detail in [[archive-ai-connector]] memory and today's History.md entry.
+
+**Also built today, both on the real Desktop (not the worktree) at `~/Desktop/Archive Viewer/`:**
+- `dictate.sh` — speak, local Whisper transcribes, text lands on clipboard. Working, tested.
+- `talk.py` / `talk.sh` — full voice conversation with an AI, archive tools wired in, proven working with real archive searches by voice. Extended same day to support `claude`, `chatgpt`, `grok`, `gemini` as a hedge against depending on one AI provider — only `claude` has a working key right now (`~/.anthropic_key`); the other three need their own keys saved the same safe way (`pbpaste > ~/.openai_key` etc.) before they'll work.
+
+**Open items for next session, in rough priority order:**
+1. **TCK status** — Crypt Keeper said "server is online and updating" late today. Ask him directly what "updating" covers and a rough timeline — the permanent public address for the archive connector (replacing the temporary Cloudflare quick-tunnel) is waiting on this.
+2. **The worktree confusion** — most of today's work happened in an isolated git worktree, invisible from Saba's everyday `Saba Code` folder. Nothing was lost (all committed + pushed to the now-public `SageSaba/Saba-Code` repo), but this branch has never been merged to `main`, so none of today's files show up where Saba actually looks. Needs a real decision next session: merge now, or a cleaner ongoing way to keep the everyday folder in sync.
+3. **xAI / OpenAI / Gemini keys** for `talk.py`'s other providers, if Saba wants those actually tested (not urgent — Claude's version already works).
+4. **The "living books" vision**, named late today, entirely unbuilt: AIs grounded in Scripture (not channeling, careful about that distinction) letting the next generation be *taught by* Jesus/Paul/Moses/archive speakers in their own real words, not just read them. Saba's own words for the whole night's real purpose: "I am hoping to give the next generation living books." Return to this fresh, not rushed — full detail in [[malachi-charter]] memory.
+5. **Raycast integration** — discussed (⌘R record, ⌘S stop, ⌘L last 5, ⌘C copy, ⌘V paste, ⌘D save, ⌘X clear) but not yet built.
+
+## PREVIOUS STATUS: STOPPED (Saba retiring, 2026-07-21 night) — AI-drives-the-archive road blocked (now solved, see above)
 Goal: get an AI chat in Open WebUI (localhost:3000, Docker) to call the Archive AI Connector (8766) as a tool and answer from real evidence. Tried four models, four different failures, zero successful connector calls:
 - qwen3:4b and gemma4:12b (local, Ollama) both hallucinated a fake tool (`search_calendar_events`/`create_tasks`) instead of the real one; gemma4:12b ran away into a 90+-call loop inventing a fictional business scenario.
 - llama3.1:8b (local, Ollama) printed a malformed raw JSON function-call as chat text instead of calling anything.

@@ -11,10 +11,12 @@ A local Mac archive ("the book"): Sermons.db holds ~2,600 services, ~3M transcri
 - Talking through ideas, sermons, stories, letters, plans — then SAVE THE RESULT TO GOOGLE DRIVE.
 - Drafting documents by voice (like the credo, which was made this way).
 - Bible study, history questions, thinking out loud.
+- **NEW (2026-07-22): asking real questions of the archive itself**, if the "Archive Well" custom connector is turned on (Settings → Customize → connector "Archive Well"). It gives real search/evidence from Sermons.db — proven live the same day (found Oliver Hogue's pierced-ear teaching). This is read-only evidence, same law as everywhere else — the connector never answers on its own, forms nothing, just returns exact transcript text; you form the answer from it same as always.
 
 ## What chat is NOT for
-- No code, no database changes, no file operations on the Mac — that's the code session's work (Claude Code, where the laws and Work Note live).
+- Still no file operations, no code changes, no writing to any database — that's the code session's work (Claude Code, where the laws and Work Note live). Archive Well only reads; it can't touch anything.
 - Don't redesign the archive; capture ideas as notes for the code session.
+- Note: Archive Well only exists on Saba's own claude.ai account right now, via a temporary test tunnel that dies when the code session's local processes stop — not yet a permanent connection.
 
 ## The hand-off ritual (proven, works)
 1. Talk it out here by voice.
