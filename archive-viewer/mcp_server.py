@@ -25,15 +25,35 @@ from typing import Optional
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 CONNECTOR_URL = os.environ.get("ARCHIVE_CONNECTOR_URL", "http://127.0.0.1:8766")
 HOST = os.environ.get("MCP_BRIDGE_HOST", "127.0.0.1")
 PORT = int(os.environ.get("MCP_BRIDGE_PORT", "8769"))
 
+# The SDK's DNS-rebinding protection only allows localhost by default, which
+# blocks every request once this sits behind a tunnel/reverse proxy (Claude
+# calls it by its public hostname, not 127.0.0.1). The SDK only supports
+# exact-match or a ":*" port-wildcard -- no subdomain wildcards -- so whoever
+# fronts this with a real domain (Cloudflare Tunnel, etc.) sets
+# ARCHIVE_MCP_PUBLIC_HOST to that exact hostname (no scheme, no port unless
+# the domain itself includes one), e.g. archive.example.com or, for a
+# trycloudflare.com quick-tunnel test, the exact random hostname it prints.
+_public_host = os.environ.get("ARCHIVE_MCP_PUBLIC_HOST")
+_allowed_hosts = ["127.0.0.1", "127.0.0.1:*", "localhost", "localhost:*"]
+_allowed_origins = ["http://127.0.0.1:*", "http://localhost:*"]
+if _public_host:
+    _allowed_hosts.append(_public_host)
+    _allowed_origins.append(f"https://{_public_host}")
+
 mcp = FastMCP(
     "Archive Well",
     host=HOST,
     port=PORT,
+    transport_security=TransportSecuritySettings(
+        allowed_hosts=_allowed_hosts,
+        allowed_origins=_allowed_origins,
+    ),
     instructions=(
         "Read-only evidence API over a sermon/service archive. "
         "These tools return exact transcript text plus metadata -- they "
