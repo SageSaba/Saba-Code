@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archive — four box (dev)</title>
+<style>
+  :root {
+    --bg: #f3f3f0; --panel: #ffffff; --field: #eae9e5; --ink: #1d1d1f;
+    --ink-2: #6f6f74; --line: #d8d7d3; --accent: #2456c8; --accent-soft: #e3ebfb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161617; --panel: #222224; --field: #2d2d30; --ink: #f0f0f2;
+      --ink-2: #a0a0a6; --line: #3a3a3e; --accent: #6f9bff; --accent-soft: #24314f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; padding: 8px;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px; line-height: 1.4;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    height: calc(100vh - 16px);
+  }
+  .box {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .box-head {
+    padding: 6px 10px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 12px;
+    color: var(--ink-2); display: flex; justify-content: space-between; align-items: center;
+    flex: none;
+  }
+  .box-body { flex: 1; overflow: auto; padding: 0; }
+
+  /* AI box */
+  #ai-body { padding: 8px; display: flex; flex-direction: column; gap: 8px; height: 100%; }
+  .ask-row { display: flex; gap: 6px; flex: none; }
+  #q {
+    flex: 1; background: var(--field); border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 10px; font: inherit; color: var(--ink); resize: none; min-height: 36px;
+  }
+  #askBtn {
+    border: none; background: var(--accent); color: #fff; font: inherit; font-weight: 600;
+    border-radius: 8px; padding: 0 14px; cursor: pointer;
+  }
+  #askBtn:disabled { opacity: 0.5; cursor: wait; }
+  #answer { flex: 1; overflow: auto; white-space: pre-wrap; font-size: 13px; padding: 4px; }
+  #answer.empty { color: var(--ink-2); }
+  #status { font-size: 11px; color: var(--ink-2); flex: none; }
+
+  /* Sermons list */
+  .row {
+    display: block; width: 100%; text-align: left; padding: 6px 10px;
+    border: none; border-bottom: 1px solid var(--line); background: transparent;
+    color: var(--ink); font: inherit; cursor: pointer; font-size: 12px;
+  }
+  .row:hover { background: var(--field); }
+  .row.selected { background: var(--accent-soft); }
+  .row .t { font-weight: 700; color: var(--accent); }
+
+  /* Service / video */
+  video { width: 100%; display: block; background: #000; aspect-ratio: 16/9; }
+  #svcLine { padding: 6px 10px; font-size: 12px; color: var(--ink-2); }
+
+  /* Timestamps */
+  .line { padding: 4px 10px; border-bottom: 1px solid var(--line); font-size: 12px; }
+  .line .t { color: var(--accent); font-weight: 700; margin-right: 6px; font-variant-numeric: tabular-nums; }
+  .empty { padding: 12px; color: var(--ink-2); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="grid">
+
+  <!-- top-left: AI, wired to the connector via the /ask endpoint -->
+  <div class="box">
+    <div class="box-head">Ask the Archive (AI)</div>
+    <div class="box-body" id="ai-body">
+      <div class="ask-row">
+        <textarea id="q" placeholder="Ask anything about the archive..."></textarea>
+        <button id="askBtn">Ask</button>
+      </div>
+      <div id="status"></div>
+      <div id="answer" class="empty">Ask above — the archive is searched, then Claude answers from what it finds.</div>
+    </div>
+  </div>
+
+  <!-- top-right: Service / video -->
+  <div class="box">
+    <div class="box-head" id="svcHead">Service</div>
+    <div class="box-body">
+      <video id="player" controls></video>
+      <div id="svcLine">No service open yet.</div>
+    </div>
+  </div>
+
+  <!-- bottom-left: Sermons list, real data from the connector -->
+  <div class="box">
+    <div class="box-head">Sermons <span id="sermCount" style="font-weight:400"></span></div>
+    <div class="box-body" id="sermList"><div class="empty">Loading…</div></div>
+  </div>
+
+  <!-- bottom-right: Timestamps for the open service -->
+  <div class="box">
+    <div class="box-head">Timestamps</div>
+    <div class="box-body" id="timestamps"><div class="empty">Open a service to see its transcript here.</div></div>
+  </div>
+
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+  const CONNECTOR = "http://127.0.0.1:8766";
+  const VIEWER = "http://localhost:8765";
+  let currentServiceID = null;
+
+  // ---- AI box: reuses the already-proven "Ask the Archive" /ask endpoint ----
+  async function ask() {
+    const question = $("q").value.trim();
+    if (question.length < 3) { $("status").textContent = "Type a question first."; return; }
+    $("askBtn").disabled = true;
+    $("answer").className = "empty";
+    $("answer").textContent = "…";
+    $("status").textContent = "Searching the archive...";
+    let d;
+    try {
+      const res = await fetch("http://127.0.0.1:8768/ask", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }) });
+      d = await res.json();
+    } catch {
+      $("status").textContent = "Could not reach Ask the Archive (port 8768) -- is it running?";
+      $("askBtn").disabled = false;
+      return;
+    }
+    $("askBtn").disabled = false;
+    if (d.error) { $("status").textContent = d.error; $("answer").textContent = ""; return; }
+    $("status").textContent = "";
+    $("answer").className = "";
+    $("answer").textContent = d.answer;
+  }
+  $("askBtn").addEventListener("click", ask);
+  $("q").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(); }
+  });
+
+  // ---- Sermons list: real data from the connector's /search ----
+  async function loadSermons() {
+    try {
+      const res = await fetch(CONNECTOR + "/search", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: "the", limit: 40 }) });
+      const d = await res.json();
+      const seen = new Map();
+      for (const h of (d.hits || [])) {
+        if (!seen.has(h.service_id)) seen.set(h.service_id, h);
+      }
+      const services = [...seen.values()];
+      $("sermCount").textContent = "(" + services.length + ")";
+      $("sermList").innerHTML = services.map(s =>
+        `<button class="row" data-sid="${s.service_id}">` +
+        `<span class="t">${esc(s.date)}</span> — ${esc(s.title)}</button>`
+      ).join("") || '<div class="empty">No services found.</div>';
+      document.querySelectorAll("#sermList .row").forEach(btn => {
+        btn.addEventListener("click", () => openService(parseInt(btn.dataset.sid)));
+      });
+    } catch (e) {
+      $("sermList").innerHTML = '<div class="empty">Could not reach the connector (port 8766).</div>';
+    }
+  }
+
+  // ---- Service + Timestamps: real data from the connector's /service ----
+  async function openService(serviceID) {
+    currentServiceID = serviceID;
+    document.querySelectorAll("#sermList .row").forEach(r =>
+      r.classList.toggle("selected", parseInt(r.dataset.sid) === serviceID));
+    $("svcHead").textContent = "Service";
+    $("svcLine").textContent = "Loading...";
+    $("timestamps").innerHTML = '<div class="empty">Loading...</div>';
+    try {
+      const res = await fetch(CONNECTOR + "/service", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ service_id: serviceID, include_transcript: true }) });
+      const d = await res.json();
+      $("svcLine").textContent = d.date + (d.title ? " — " + d.title : "");
+      const player = $("player");
+      if (d.video_file_exists) {
+        player.src = VIEWER + "/video/" + serviceID;
+      } else {
+        player.removeAttribute("src");
+      }
+      const lines = d.transcript || [];
+      $("timestamps").innerHTML = lines.slice(0, 200).map(l =>
+        `<div class="line"><span class="t">${esc(l.start)}</span>${esc(l.exact_text)}</div>`
+      ).join("") || '<div class="empty">No transcript lines.</div>';
+    } catch (e) {
+      $("svcLine").textContent = "Could not load this service.";
+    }
+  }
+
+  loadSermons();
+</script>
+</body>
+</html>
