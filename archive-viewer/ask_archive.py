@@ -30,6 +30,14 @@ import subprocess
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+# Typo-forgiving search: correct a search word against the archive's own
+# vocabulary (spell_correct.py). Optional — if unavailable, searches run
+# exactly as before.
+try:
+    import spell_correct as _spell
+except Exception:
+    _spell = None
+
 DB_PATH = "/Users/saba/Archive/Sermons.db"
 HOST = "127.0.0.1"
 PORT = 8768
@@ -353,6 +361,14 @@ def gather_evidence(question):
         speaker_words = set(speaker[2]) if speaker else set()
         topic = [w for w in qwords
                  if w not in FILLER_WORDS and w not in speaker_words]
+        # typo tolerance: nudge each search word toward the archive's own
+        # vocabulary (isreal -> israel) before the LIKE search. correct_word
+        # returns the word unchanged if it's already known or has no clear match.
+        if _spell is not None:
+            try:
+                topic = [_spell.correct_word(w) for w in topic]
+            except Exception:
+                pass
         pairs = [f"{a} {b}" for a, b in zip(topic, topic[1:])]
         singles = sorted(set(topic), key=len, reverse=True)
 
@@ -474,10 +490,24 @@ def ask_ai(question, best, note, rulings=None):
                            note=("NOTE: " + note) if note else "",
                            rulings=rtext,
                            evidence=format_evidence(best))
+    # The API key lives in ~/.zshrc, which is only sourced by an interactive
+    # shell. When this server is started by the Book of Remembrance .app
+    # (macOS `do shell script` = non-interactive), the key is absent and every
+    # question fails with "not signed in". So supply it ourselves.
+    env = os.environ.copy()
+    if not env.get("ANTHROPIC_API_KEY"):
+        keyfile = os.path.expanduser("~/.anthropic_key")
+        try:
+            if os.path.exists(keyfile):
+                k = open(keyfile).read().strip()
+                if k:
+                    env["ANTHROPIC_API_KEY"] = k
+        except OSError:
+            pass
     try:
         run = subprocess.run(
             [CLAUDE, "-p", "--output-format", "text", prompt],
-            capture_output=True, text=True, timeout=240)
+            capture_output=True, text=True, timeout=240, env=env)
     except FileNotFoundError:
         raise AskError(500, "The Claude command was not found on this Mac.")
     except subprocess.TimeoutExpired:

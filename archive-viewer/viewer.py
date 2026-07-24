@@ -15,8 +15,23 @@ import mimetypes
 import os
 import re
 import sqlite3
+import struct
 import urllib.parse
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+try:
+    import apsw
+    import sqlite_vec
+    _VEC_AVAILABLE = True
+except ImportError:
+    _VEC_AVAILABLE = False
+
+OLLAMA_URL = "http://localhost:11434/api/embeddings"
+EMBED_MODEL = "nomic-embed-text"
+EMBED_DIMS = 768
+QUESTION_WORDS = {"who", "what", "when", "where", "why", "how", "tell", "find",
+                  "show", "did", "does", "was", "were", "is", "are", "about"}
 
 DB_PATH = "/Users/saba/Archive/Sermons.db"
 SUGGESTIONS_DB = "/Users/saba/Archive/Archive_Suggestions.db"
@@ -98,6 +113,30 @@ def hit_row(r, text=None, speaker=None):
     }
 
 
+def service_at(con, service_id, t):
+    """The one segment closest to a specific second in a specific service —
+    for sending someone a direct link to ONE exact moment, no searching."""
+    row = con.execute(
+        """
+        SELECT r.ID AS id, r.service_id, r.start, r.end, r.text,
+               s.preach_date, s.title, s.media_path,
+               COALESCE(sp.full_name, '') AS speaker
+        FROM RawSegments r
+        JOIN Services s ON s.ID = r.service_id
+        LEFT JOIN Speakers sp ON sp.ID = r.speaker_id
+        WHERE r.service_id = ?
+        ORDER BY ABS(
+            (CAST(substr(r.start,1,2) AS REAL)*3600 +
+             CAST(substr(r.start,4,2) AS REAL)*60 +
+             CAST(substr(r.start,7) AS REAL)) - ?
+        )
+        LIMIT 1
+        """,
+        (service_id, t),
+    ).fetchone()
+    return hit_row(row) if row else None
+
+
 def text_search(con, phrase, and_words=None):
     """Phrase match, or all-words match when and_words is given."""
     if and_words:
@@ -172,6 +211,91 @@ def speaker_text_search(con, sid, name, and_words):
     return [hit_row(r, speaker=name) for r in rows]
 
 
+def _get_embedding(text):
+    payload = json.dumps({"model": EMBED_MODEL, "prompt": text}).encode()
+    req = urllib.request.Request(OLLAMA_URL, data=payload,
+                                  headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=10) as r:
+        return json.loads(r.read())["embedding"]
+
+
+def ai_search(query, top_k=20):
+    """Semantic search: embed the query, find closest Summaries, return hits."""
+    if not _VEC_AVAILABLE:
+        return [], None
+    try:
+        vec = _get_embedding(query)
+        packed = struct.pack(f"{EMBED_DIMS}f", *vec)
+    except Exception:
+        return [], None
+
+    try:
+        con = apsw.Connection(DB_PATH)
+        con.enableloadextension(True)
+        sqlite_vec.load(con)
+        con.enableloadextension(False)
+
+        matches = con.execute("""
+            SELECT sv.summary_id, sv.distance
+            FROM SummaryVecs sv
+            WHERE sv.embedding MATCH ? AND k = ?
+            ORDER BY sv.distance
+        """, (packed, top_k)).fetchall()
+
+        if not matches:
+            con.close()
+            return [], None
+
+        summary_ids = [m[0] for m in matches]
+        id_list = ",".join(str(i) for i in summary_ids)
+
+        rows = con.execute(f"""
+            SELECT
+                sm.ID AS summary_id,
+                sm.service_id,
+                sm.part_id,
+                sm.summary,
+                sv.preach_date,
+                sv.title,
+                sv.media_path,
+                COALESCE(
+                    (SELECT MIN(r.start) FROM RawSegments r
+                     WHERE r.service_id = sm.service_id),
+                    '00:00:00.000'
+                ) AS seg_start,
+                COALESCE(
+                    (SELECT MIN(r.end) FROM RawSegments r
+                     WHERE r.service_id = sm.service_id),
+                    '00:00:30.000'
+                ) AS seg_end
+            FROM Summaries sm
+            JOIN Services sv ON sv.ID = sm.service_id
+            WHERE sm.ID IN ({id_list})
+        """).fetchall()
+
+        con.close()
+    except Exception:
+        return [], None
+
+    order = {sid: i for i, sid in enumerate(summary_ids)}
+    rows = sorted(rows, key=lambda r: order.get(r[0], 999))
+
+    hits = []
+    for r in rows:
+        hits.append({
+            "id": r[0],
+            "service_id": r[1],
+            "date": r[4],
+            "title": r[5] or "",
+            "speaker": "",
+            "start": round(time_to_seconds(r[7]), 2),
+            "end": round(time_to_seconds(r[8]), 2),
+            "text": r[3] or "",
+            "has_video": bool(r[6]) and os.path.exists(r[6]),
+        })
+    return hits, f'AI search — "{query}"'
+
+
 def search(query):
     """Understand a plain question: a speaker's name finds where they speak;
     other words find where they were said; both together combine."""
@@ -189,13 +313,13 @@ def search(query):
                 return hits, f"{name} — singing, {total} moments"
             if topic:
                 hits = speaker_text_search(con, sid, name, topic)
-                explain = f"{name} — moments with “{' '.join(topic)}”"
+                explain = f'{name} — moments with “{" ".join(topic)}”'
                 # all words together found nothing — try the biggest word alone
                 if not hits and len(topic) > 1:
                     for w in sorted(topic, key=len, reverse=True):
                         hits = speaker_text_search(con, sid, name, [w])
                         if hits:
-                            explain = f"{name} — moments with “{w}”"
+                            explain = f'{name} — moments with “{w}”'
                             break
             else:
                 hits, total = speaker_segments(con, sid, name)
@@ -205,6 +329,13 @@ def search(query):
                                f"(add a word to narrow)")
             return hits, explain
 
+        # Natural-language question → lead with AI search
+        is_question = len(qwords) > 3 or bool(set(qwords) & QUESTION_WORDS)
+        if is_question and _VEC_AVAILABLE:
+            hits, explain = ai_search(query)
+            if hits:
+                return hits, explain
+
         hits = text_search(con, query)
         if hits:
             return hits, None
@@ -213,11 +344,16 @@ def search(query):
         if topic:
             hits = text_search(con, None, and_words=topic)
             if hits:
-                return hits, f"moments with “{' '.join(topic)}”"
+                return hits, f'moments with “{" ".join(topic)}”'
             for w in sorted(topic, key=len, reverse=True):
                 hits = text_search(con, None, and_words=[w])
                 if hits:
-                    return hits, f"moments with “{w}”"
+                    return hits, f'moments with “{w}”'
+        # Last resort: AI semantic search
+        if _VEC_AVAILABLE:
+            hits, explain = ai_search(query)
+            if hits:
+                return hits, explain
         return [], None
     finally:
         con.close()
@@ -340,6 +476,35 @@ def save_mark(service_id, seconds, note):
             "date": row[0], "title": row[1] or "", "note": note}
 
 
+def save_portion(service_id, start, end, note):
+    con = sqlite3.connect(DB_PATH)
+    row = con.execute(
+        "SELECT preach_date, title FROM Services WHERE ID = ?",
+        (service_id,)).fetchone()
+    con.close()
+    if not row:
+        return None
+    mcon = sqlite3.connect(SUGGESTIONS_DB)
+    mcon.execute(
+        "CREATE TABLE IF NOT EXISTS portions ("
+        "  id INTEGER PRIMARY KEY,"
+        "  service_id INTEGER NOT NULL,"
+        "  start REAL NOT NULL,"
+        "  end REAL NOT NULL,"
+        "  note TEXT DEFAULT '',"
+        "  created_at TEXT DEFAULT (datetime('now', 'localtime'))"
+        ")"
+    )
+    cur = mcon.execute(
+        "INSERT INTO portions (service_id, start, end, note) VALUES (?,?,?,?)",
+        (service_id, start, end, note))
+    mcon.commit()
+    mcon.close()
+    return {"id": cur.lastrowid, "service_id": service_id,
+            "start": start, "end": end,
+            "date": row[0], "title": row[1] or "", "note": note}
+
+
 def marks_of_service(service_id):
     mcon = marks_con()
     rows = mcon.execute(
@@ -454,6 +619,23 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"query": q, "hits": hits, "explain": explain})
             return
 
+        if parsed.path == "/api/service_at":
+            qs = urllib.parse.parse_qs(parsed.query)
+            try:
+                service_id = int(qs.get("service_id", ["0"])[0])
+                t = float(qs.get("t", ["0"])[0])
+            except ValueError:
+                self.send_json({"error": "bad service_id or t"}, 400)
+                return
+            con = sqlite3.connect(DB_PATH)
+            con.row_factory = sqlite3.Row
+            try:
+                hit = service_at(con, service_id, t)
+            finally:
+                con.close()
+            self.send_json({"hit": hit})
+            return
+
         if parsed.path == "/api/context":
             qs = urllib.parse.parse_qs(parsed.query)
             try:
@@ -493,6 +675,32 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/api/portion":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                data = json.loads(self.rfile.read(length) or b"{}")
+                service_id = int(data["service_id"])
+                start = float(data["start"])
+                end = float(data["end"])
+                note = str(data.get("note", ""))[:500]
+            except (KeyError, ValueError, json.JSONDecodeError):
+                self.send_json({"error": "bad portion"}, 400)
+                return
+            if end <= start:
+                self.send_json({"error": "end must be after start"}, 400)
+                return
+            try:
+                saved = save_portion(service_id, start, end, note)
+            except sqlite3.Error as e:
+                self.send_json({"error": str(e)}, 500)
+                return
+            if saved is None:
+                self.send_json({"error": "no such service"}, 404)
+            else:
+                self.send_json({"saved": saved})
+            return
+
         if parsed.path != "/api/mark":
             self.send_error(404)
             return
@@ -566,11 +774,25 @@ class Handler(BaseHTTPRequestHandler):
             pass  # browser scrubbed / closed the stream — normal
 
 
+def local_ip():
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
 def main():
     if not os.path.exists(DB_PATH):
         raise SystemExit(f"Database not found: {DB_PATH} — is the Data drive mounted?")
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"Archive Viewer running — open http://localhost:{PORT}")
+    server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+    print(f"Archive Viewer running.")
+    print(f"  On this Mac:      http://localhost:{PORT}")
+    print(f"  On your network:  http://{local_ip()}:{PORT}")
     print("Press Ctrl+C to stop.")
     try:
         server.serve_forever()

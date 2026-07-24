@@ -129,8 +129,11 @@
         <button id="fwd5">5 sec »</button>
         <button id="fwd5m">5 min »</button>
         <button id="fwd15m">15 min »</button>
-        <button id="markBtn" title="Save this moment with its place in the archive">✚ Mark</button>
+        <button id="startBtn" title="Mark the start of a Portion">▶ Start</button>
+        <button id="endBtn" title="Mark the end of a Portion" disabled>■ End</button>
+        <button id="sendBtn" title="Send this Portion" disabled>⬆ Send</button>
       </div>
+      <div id="portionStatus" style="font-size:0.82em;color:#888;padding:4px 0 0 0;min-height:1.4em;"></div>
     </div>
   </div>
 </div>
@@ -142,37 +145,69 @@
   const video = document.getElementById("video");
   const svcLine = document.getElementById("svcLine");
   const playBtn = document.getElementById("playBtn");
-  const markBtn = document.getElementById("markBtn");
+  const startBtn = document.getElementById("startBtn");
+  const endBtn   = document.getElementById("endBtn");
+  const sendBtn  = document.getElementById("sendBtn");
+  const portionStatus = document.getElementById("portionStatus");
   let currentServiceId = null;
+  let portionStart = null;
+  let portionEnd   = null;
 
-  markBtn.addEventListener("click", async () => {
-    if (currentServiceId === null) {
-      svcLine.textContent = "Nothing to mark — load a service first.";
-      return;
-    }
-    const seconds = video.currentTime;
-    const note = window.prompt(
-      "Mark " + fmt(seconds) + " — note (who/what you see), or leave blank:", "");
-    if (note === null) return;  // cancelled
+  function resetPortion() {
+    portionStart = null; portionEnd = null;
+    startBtn.textContent = "▶ Start";
+    startBtn.style.background = "";
+    endBtn.disabled = true;
+    sendBtn.disabled = true;
+    portionStatus.textContent = "";
+  }
+
+  startBtn.addEventListener("click", () => {
+    if (!currentServiceId) { portionStatus.textContent = "Load a service first."; return; }
+    portionStart = video.currentTime;
+    portionEnd = null;
+    startBtn.textContent = "▶ " + fmt(portionStart);
+    startBtn.style.background = "#2a5";
+    endBtn.disabled = false;
+    sendBtn.disabled = true;
+    portionStatus.textContent = "Start set at " + fmt(portionStart) + " — play to the end point, then press ■ End.";
+  });
+
+  endBtn.addEventListener("click", () => {
+    portionEnd = video.currentTime;
+    if (portionEnd <= portionStart) { portionStatus.textContent = "End must be after start."; return; }
+    endBtn.textContent = "■ " + fmt(portionEnd);
+    endBtn.style.background = "#a52";
+    sendBtn.disabled = false;
+    portionStatus.textContent = fmt(portionStart) + " → " + fmt(portionEnd) + " — add a note and press ⬆ Send.";
+  });
+
+  sendBtn.addEventListener("click", async () => {
+    const note = window.prompt("Note for this Portion (who, what, why) — or leave blank:", "");
+    if (note === null) return;
     try {
-      const res = await fetch("/api/mark", {
+      const res = await fetch("/api/portion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ service_id: currentServiceId,
-                               seconds: seconds, note: note.trim() })
+        body: JSON.stringify({
+          service_id: currentServiceId,
+          start: portionStart,
+          end: portionEnd,
+          note: note.trim()
+        })
       });
       const data = await res.json();
       if (data.saved) {
-        const s = data.saved;
-        svcLine.textContent = "✚ Marked " + s.time + " · " + s.date +
-          (s.title ? " — " + s.title : "") +
-          (s.note ? "  ·  “" + s.note + "”" : "") + "  (saved)";
+        portionStatus.textContent = "✓ Portion saved — " + fmt(portionStart) + " → " + fmt(portionEnd) + (note.trim() ? "  ·  “" + note.trim() + "”" : "");
+        resetPortion();
+        startBtn.textContent = "▶ Start";
+        startBtn.style.background = "";
+        endBtn.textContent = "■ End";
+        endBtn.style.background = "";
       } else {
-        svcLine.textContent = "Mark failed: " + (data.error || "unknown");
+        portionStatus.textContent = "Send failed: " + (data.error || "unknown");
       }
-    } catch (e) {
-      svcLine.textContent = "Mark failed: " + e;
-    }
+    } catch(e) { portionStatus.textContent = "Send failed: " + e; }
   });
 
   const esc = s => s.replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
@@ -310,6 +345,37 @@
   // Arriving with ?q=... in the address runs the search immediately.
   const preset = new URLSearchParams(location.search).get("q");
   if (preset) { q.value = preset; runSearch(); }
+
+  // Arriving with ?moment=service_id,start_seconds jumps straight to ONE
+  // exact place — no search, no picking the right row out of several.
+  const momentParam = new URLSearchParams(location.search).get("moment");
+  if (momentParam) {
+    const [sid, startStr] = momentParam.split(",");
+    const serviceId = parseInt(sid, 10);
+    const start = parseFloat(startStr);
+    if (serviceId && !isNaN(start)) {
+      (async () => {
+        try {
+          const res = await fetch("/api/service_at?service_id=" + serviceId + "&t=" + start);
+          const data = await res.json();
+          if (data.hit) {
+            hitCount.textContent = "one exact moment";
+            rowsEl.innerHTML = "";
+            const b = document.createElement("button");
+            b.className = "row";
+            const h = data.hit;
+            b.innerHTML = '<span class="t">' + fmt(h.start) + '</span>' +
+              '<span><span class="txt">' + esc(h.text || "(this moment)") + '</span>' +
+              '<div class="meta">' + esc(h.date) +
+              (h.title ? " · " + esc(h.title) : "") + '</div></span>';
+            b.addEventListener("click", () => selectHit(b, h));
+            rowsEl.appendChild(b);
+            selectHit(b, h);
+          }
+        } catch (e) { svcLine.textContent = "Could not load that moment: " + e; }
+      })();
+    }
+  }
 
   // Voice input — uses the browser's built-in speech recognition when available.
   const micBtn = document.getElementById("micBtn");

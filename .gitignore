@@ -1,0 +1,45 @@
+# What the repo does NOT carry.
+# Written 2026-07-24. The rule: code, laws, plans and notes belong in git.
+# Databases, backups, media and machine litter do not.
+
+# --- databases: the book and the ruling layer live in ~/Archive, never here
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# --- backups of any kind
+backups/
+_backups/
+*.bak
+*_before_*.py
+*_before_*.db
+
+# --- media: it lives on the Data drive
+*.mp4
+*.webm
+*.mp3
+*.m4a
+*.wav
+*.aiff
+*.mov
+
+# --- voiceprints and faces (they belong beside the archive, not in code)
+voiceprints/
+faces/
+
+# --- machine litter
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# --- Xcode's per-user state, not the project
+xcuserdata/
+*.xcuserstate
+
+# --- session and worktree scratch
+.claude/

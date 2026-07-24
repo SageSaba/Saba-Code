@@ -77,3 +77,51 @@ Session start: read memory → read Work Note → finish the unfinished → pres
 Session end: nothing half-done unwritten; crash expected anytime, and it can't take anything.
 
 *The structure serves the credo: the ear listens first, the mouth serves the house, the house keeps remembrance, the seed carries it on.*
+
+---
+
+## V. The Flow — how the data actually moves, and where it stops
+*Measured from the live databases 2026-07-24. Section I says where things live; this section says what moves between them, and what doesn't.*
+
+### The two databases — the thing that confuses everyone
+
+| File | Size | Holds | Rule |
+|---|---|---|---|
+| `~/Archive/Sermons.db` | 1.46 GB | Services 2,635 · RawSegments 3,016,461 · Speakers · Parts · Summaries · Meanings · ChurchRecords · AIConsult | THE BOOK. Never written except by ruling. |
+| `~/Archive/Archive_Suggestions.db` | 729 KB | people 48 · voiceprints 7 · people_mentions 776 · suggestions 61 · marks · questions · book_rulings | THE RULING LAYER. All writes land here. |
+
+There is **no `people` table in `Sermons.db`.** Anyone who opens the book looking for the family work will find nothing and conclude it was lost. Two empty decoy files named `Sermons.db` also exist (`~/Desktop`, `/Volumes/Data/Video Archive/SQL Files/`) — 0 bytes, they open fine and show nothing.
+
+### The doors (what is running, and what each one reads)
+
+| Port | Program | Reads |
+|---|---|---|
+| 8765 | `viewer.py` — the approved screen | RawSegments, Parts, Speakers, Summaries, marks |
+| 8766 | `connector.py` — evidence for any AI | RawSegments, Parts, Speakers |
+| 8767 | `transcript_exporter.py` | transcripts |
+| 8768 | `ask_archive.py` — the answers | RawSegments, Meanings, Speakers, marks |
+| 8769 | `mcp_server.py` — the archive inside chat | (no web page) |
+| 8790 / 8791 | bare `python -m http.server` | a folder of files — One Box, the Living Book |
+
+### The levels, and what each one loses
+
+1. **The recording** — 2,466 services have media; 169 have none.
+2. **The hearing** (whisper) — RawSegments: 3,016,461 lines across 2,247 services. **388 services have media and no words** — service 2499, Mary Webster, was one of them.
+3. **Who and what** — only **595,693 lines (19.7%)** carry a `speaker_id`, and only **12 names** were ever used; 577,290 of those are Thomas Young. `type_id` is filled on the same rows. `location_id`: **0 — never used**, `Locations` is empty. **2,420,768 lines are uncredited.**
+4. **Meaning and shape** — Meanings covers all 2,247 transcribed services; Summaries reaches **366**; Parts **543**. **2,269 services have no summary.**
+5. **The ruling layer** — people 48 (47 with relationships), voiceprints 7, people_mentions 776, suggestions 61, marks 1.
+
+### THE BREAK (found 2026-07-24)
+
+**Of the ruling layer, only `marks` is read by any program.** `people`, `voiceprints`, `people_mentions` and `suggestions` — 892 rows of human judgment — are opened by nothing. The screen cannot show them, the answer engine cannot say them, the connector cannot hand them to another AI.
+
+So a voiceprint can find Mary Webster at 0.964 and the archive still cannot tell you she is there. **Saved to the database is not done.** A thing is done when a program reads it.
+
+The join that closes it is short: `RawSegments.speaker_id` is the column every consumer already reads for *who*, and a confirmed voiceprint is an answer to *who*. Whether that answer is written into the raw lines, kept as a rulings table the programs join against, or asked of the voice index live, is a ruling not yet made.
+
+### Laws this section adds
+
+- **A witness's answer is not filed, it is wired.** Nothing counts as delivered until a program reads it and a screen shows it.
+- **"Brother" and "Sister" are the family of God, not blood** — 3,903 uses. Kinship is only claimed where the record uses a possessive: "Virginia's dad," "my wife," "her brother." Reading the honorific as a sibling invented a person's maiden name and signed Saba's name to it (2026-07-23, corrected 2026-07-24).
+- **Two or three witnesses seat a fact** (Deut 19:15). One line is a claim. Independent means different services or different mouths — three sentences inside one sermon are one witness. **The machine testifies but does not count toward the number.**
+- **Every claim carries its evidence line, and no claim wears a witness's name unless he said it.**
