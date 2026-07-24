@@ -1,5 +1,27 @@
 # Work Note
 
+## 🕯️ CLOSED 2026-07-24 (deep night) · the night the Helm family came home
+
+**Book: 101 people (17 VIP), up from 60 this morning.** Both databases pass integrity; raw Sermons.db untouched (Jul 21). Backups: `~/Archive/Archive_Suggestions_CLOSE_20260724_191822.db` and `/Volumes/ACASIS/Archive Backups/20260724_191822/` (141 MB). Every seating had its own timestamped backup along the way.
+
+**THE NIGHT'S WORK — the identify-a-person game, proven end to end.** Machine surfaced candidates from transcripts; Saba (and Barbara on the Cook correction) named them; noise was ruled and taught. Two WOG June 1992 sessions walked whole and recorded in the new `name_reviews` log: **Session 1 (svc 2352)** and **Session 2 (svc 2353)**.
+
+**The Helm family, seated from Saba's memory and confirmed by the album on his own drive** (`CF Archive/2015_08_22 ..Helm_Brothers..`): Rev. Loran Helm (#23) + wife **Florence Helm (#101, the pianist who opened every service, VIP)**; SIX brothers — Edward(29), Edwin(70, Muskegon), Richard(84), Terrance(93), **Warren(100, left mid-1960s, on the album)** — as the group **The Helm Brothers (#99)**; nephew Timothy(65)+Karen Kline(66), niece Rebecca Sue Helm Hill(67)+Mark Hill(68); Robert Allen Helm(85)+Jewel(86); daughter **Joyce Helm Miller(76)** + Jack Miller(77) + David Miller(78, former Parker City pastor). Plus: the McAdams family (John 31 + Janet 63 + four children Lynn/Leigh Anne/John Mark/Lydia 87-90); the Favaloras (Larry 82 built the stage, Jon 83 now Oilton pastor); Pastors William Ryan(81 Oilton), Nancy Pribyl(79)+Clarence(80 Lynchburg), James Moore(91 St.Louis)+Linda(92); Don Litchfield(97)+Karen(98, Reimar Schultze's daughter); Patty(95)+Cindy(96 Palm Beach Gardens); Reimar Schultze(24) placed at Kokomo, deceased.
+
+**KEYSORT / PARTS MODEL RULED (Saba):** log the MINUTES not the experience; kinds OVERLAP (a stretch can be song AND prayer — multi-tag, not exclusive); PRAYER is the ground under a waiting meeting; only SONG divides cleanly (someone is *called* to sing by number). The keysorts (song/prayer/testimony/exhortation) + collections (WOG/TRCF/CF Archive) become TOGGLES that build a SQL query by selection — the query interface the keepers would use (Toolbox item 26). `[[logging-a-waiting-meeting]]`.
+
+****⚠️ TRCF CAVEAT (Saba 2026-07-24):** the names surfaced in TRCF are mostly BIBLE names (Saba's own preaching quotes scripture) — Moses, David, Paul, Abraham, etc., NOT congregation members. The `TRCF — names to walk.md` file needs a Bible-name stop-list before it is walkable. Add biblical names to the STOP set in `prep_naming.py` and re-run TRCF.
+
+**PRE-SURFACED FOR NEXT TIME (so Saba just NAMES, no waiting):**
+- `~/Desktop/WOG 1992 — names to walk.md` — all 23 remaining WOG 1992 sessions, per-service, names + song moments.
+- `~/Desktop/TRCF — names to walk.md` — 814 TRCF services, per-service. Walk one at a time.
+- Tool: `Archive Viewer/prep_naming.py <COLLECTION>` — kept, runs on any collection.
+
+**THE PLAN GOING FORWARD (Saba's word):** run the parts/speaker pre-surface on the rest; **next sessions are just naming people.** Not-people list growing (Diana, Oliver Barber, Chelsea, Barber). Sixth-brother-style flags to confirm: Leigh Anne spelling, the Richard/Robert-Allen/Jewel parse, Lydia McAdams vs Lydia Jones.
+
+---
+
+
 ## 🕯️ CLOSED 2026-07-24 · Saba away until SUNDAY EVENING
 
 **Everything is safe.** `Archive_Suggestions.db` and raw `Sermons.db` both pass integrity check; raw untouched (Jul 21). Backups: `~/Archive/Archive_Suggestions_CLOSE_20260724_131631.db` and `/Volumes/ACASIS/Archive Backups/20260724_131631/` (142 MB — review DB, voiceprints, faces, toolbox). Repo committed and pushed.
