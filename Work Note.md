@@ -1,7 +1,48 @@
 # Work Note
 *Written before starting, per Saba's law of 2026-07-20: the intention goes on paper first, so a shutdown never loses the thread. Saba: "I fully expect to crash anytime" — this note always carries the full standing state.*
 
+**➡️ DESIGNED TODAY, NOT BUILT:** `The Study Version.md` in the repo root — Saba's shift from a Hebrew edition to a STUDY edition of A Voice in the Wilderness: the text and a voice, boxes that move together, touch-a-word-to-pause, the word lens driven by his own `html/Alphabet/a-z.json`, the READER choosing which meaning each letter carries and the page composing their reading live, the archive set beside every line, and the rulings. Each language read by people that community respects, a chapter each. Belongs in Jerry Keller's hands under EVM. Awaits his word.
+
+## 🎬 IN PROGRESS — 2026-07-24 · SEGMENTS: the 1990 meetings drawn out of the tapes
+
+**Saba's word (engage):** "Should we not build the first of the segments of the service brought back in where we could use?" — the screen should show **services, not tapes**.
+
+**The problem:** the book has EIGHT rows that are media containers, not meetings. Saba's memory: nine services over three days, maybe a tenth on a fourth day; the tape was put in the machine and let run. So meetings begin and end *inside* the tapes, and run across tape changes.
+
+**The eight tapes (10h 48m total):**
+- CF Archive, dated **1990-07-09**, Rev Loran Helm Tape 1/2/3 = svc **1516** (92.0m), **1517** (85.1m), **1518** (83.6m). Likely given by Saba to Paul Canada; uploaded 2018-11-10.
+- On the Data drive, undated "1990", WOG_/1990 = svc **2501** Tape 6A (24.3m), **2502** Tape 6C (116.4m), **2503** Tape 7A (63.9m), **2504** Tape 7B (102.6m), **2505** Tape 7c 8a (79.7m).
+- **HOLES: tapes 4 and 5, and disc 6B.** Paul Canada is the lead for them (Saba asks, never Claude).
+- PROVEN NOT duplicates: 0 identical lines between the two sets; 7 shared 8-word phrases, six of them generic worship.
+
+**THE SHAPE, from Saba 2026-07-24:** **NINE sessions — THREE A DAY** (morning, afternoon, evening) over three days, **maybe a tenth**, but it did not always get recorded. After it finished there was an **AFTERGLOW** meeting — more like a breakfast session. Any segment map must fit that frame.
+
+**QUALITY PROBLEM FOUND + BEING FIXED (2026-07-24 ~11:00):** the five Drive tapes were badly under-heard — 5.6 / 5.9 / 13.0 / 6.3 / 14.8 lines per minute, against 25.6–36.4 for the three CF tapes. Coverage spans the full length, so words are dropped throughout, not in chunks. Re-reading all five with large-v3-turbo via the new durable tool `Archive Viewer/retranscribe_service.sh` (order 2501, 2503, 2505, 2504, 2502; log at `transcripts_new/wog1990_retranscribe.log`). **FILES ONLY** — nothing goes into `Sermons.db`; replacing the thin raw lines is a SEPARATE ruling on Saba's word.
+
+**Steps, in order:**
+1. Read all eight transcripts and propose SEGMENT BOUNDARIES as candidates — where singing starts, where someone opens or closes, where the words say "this morning" / "tonight" / a day name ☐ *(first pass done on the thin transcripts — four candidates found: 2504 @ ~22:40 after "and this be the benediction"; 1518 @ ~53:30 "good morning"; 1518 @ ~1:22:00 "before we dismiss" then "this evening"; 1517 @ ~57:10 "yesterday" → "this morning". Re-run after the re-transcription lands.)*
+2. Show Saba the proposed map; he confirms by ear or eye. Machine proposes, witness disposes ☐
+3. Only then: `segments` table in **Archive_Suggestions.db** (tape service_id, start_sec, end_sec, label, day, evidence line, confirmed_by) — `Sermons.db` is NOT touched and its eight rows do not move ☐
+4. The map must show the HOLES as plainly as the meetings ☐
+
+**Why:** Saba meets Ted Pate and Robert Sylvester on **Wednesday 2026-07-29**. They sat on the back row of this meeting with him. He wants to hand them a *meeting*, not "Tape 7 B."
+
+**Found today in these tapes:** Sarah Helbling testifying, svc **2504 @ 1:36:18**–1:40:36 (found via Saba's own retelling, svc 191 @ 44:00 2018-07-07 and svc 280 @ 1:00:29 2019-04-07). Faces named by Saba at svc 2504 @ 1:15:14 (James Flora, Rev. Helm, Blanche Rouintree — wife of Carl Rouintree, a girl in purple who is NOT a Helbling) and @ 1:13:38 (Donna Mullins wife of Pastor Tom Mullins of Palm Beach Gardens, an unnamed woman, John Cook missionary to Mexico, now passed — corroborated by svc 2505 @ 1:07:25). NOT YET SEATED in the people table.
+
+**Still not found:** the moment Saba is really after — a young lady saying she had waited for a day like this, the shouting, the power falling, Saba on the back row with a teenager in trouble and with Robert, all their hands in the air.
+
+**If found half-done:** nothing is written yet outside this note; step 3 is the first write and it will have its own dated backup.
+
 ## 📌 PARKED — details Saba spoke 2026-07-24, captured so they are not lost, NOT to be worked yet
+
+- **John Bruffy — the VIDEO ENGINEER who made these videos.** Saba 2026-07-24. Evidence line: svc 2505 @ 1:00:52, "Thanks John Bruffy for helping us." (Whisper spells it Bruffey.) The 1990 record exists because of him. **LEAD:** a video engineer would know where the masters went — another route to tapes 4, 5 and disc 6B. Not in the People Reference.
+- **Pastor Thomas Mullins** — Palm Beach Gardens, husband of Donna Mullins; his face identified by Saba in svc 2505 (second not yet pinned). Not in the People Reference.
+- **The Helbling family, from their own mouths, svc 2502 @ 22:02–31:00** (Tape 6C): father **Daniel Helbling** (pastor), mother **Arnel**, children incl. **Joel**, **Joanna**, and **Sarah**. Helm's account of finding them: "Jesus told me what to do in a party in Richmond, Indiana in February of 1937... that led us to the Pumphreys... and this led us then to the Helblings near Killeen and Copperas Cove, Texas." Each child is asked "who's special in your life?" and answers aloud. Saba: "This may be the best moment of their life." A PORTION for the Helbling family when he wants it.
+- **Richard Smith** — referred to in svc 2504 @ ~1:40:49 ("Richard Smith was with me and he remembers"). Saba 2026-07-24: he is **the main "Saba" of Palm Beach Gardens Christ Fellowship** — their elder/patriarch figure. NOT yet in the People Reference; would be a new row. Also unseated from today: James Flora / Rev. Helm / Blanche Rouintree (wife of Carl Rouintree) at 2504 @ 1:15:14, and Donna Mullins (wife of Pastor Tom Mullins, Palm Beach Gardens) / John Cook (missionary to Mexico, passed) at 2504 @ 1:13:38.
+- **★ BEST LEAD OF ALL — TAYLOR KELLER.** Told to Saba 2026-07-24 by his son-in-law **Pastor James Doss**: Taylor Keller, now **pastor of Plainfield Christ Fellowship** (son of Pastor Jerry Keller), ran a call-for-cassettes as his **dad's retirement** project — he asked people to send in cassettes, recorded them, and **HE HAS THAT INFORMATION**. So a gathering of this circle's tapes has ALREADY been done once, successfully, and the record of who held what exists. This is the route to the missing 1990 tapes 4, 5 and disc 6B — and probably to far more. Saba's ask to make, never Claude's.
+- **THE TAPES WERE SOLD.** These meetings were sold on videotape to anyone who wanted them — so **first-generation VHS copies exist in other people's hands**, one step closer to the source than the DVD-chain files Saba holds. Whoever bought a set may have the WHOLE set, including the missing tapes 4, 5 and disc 6B.
+- **BEST LEAD: Revival For Our Day (RFOD).** Saba: "I wouldn't be surprised if I could find a full set of videos at Revival for Our Day." The organization that held the meetings would have kept the masters — for 1990 and likely for every other year.
+- **Ask Wednesday (2026-07-29):** Ted Pate and Robert Sylvester were IN this meeting; people who attend often buy the tapes. Also **Paul Canada**, who already digitized three of them. All of these are Saba's asks to make — Claude never contacts anyone.
 
 - **Barbara's dad was Max Mullins.** Evidence line already in the record: svc 682, 2016-11-26 — "Barbara's dad got me a job in the construction crew." Saba's word, 2026-07-24.
 - **Bea Mullins and the whole Mullins family need correcting** in the People Reference.
