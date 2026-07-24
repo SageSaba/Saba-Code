@@ -1,6 +1,28 @@
 # Work Note
 *Written before starting, per Saba's law of 2026-07-20: the intention goes on paper first, so a shutdown never loses the thread. Saba: "I fully expect to crash anytime" — this note always carries the full standing state.*
 
+## 🔔 THE TURN — declared 2026-07-24, after praying most of the night
+
+Saba: *"I'm not sure how much more I want to do on this project, except to clean it up. I'm pretty sure I want to start taking my own thoughts and bringing them forth."*
+
+He said more information came in the night. **He has not yet said what it was — do not guess at it.** When he speaks it, write it verbatim first.
+
+The archive is NOT abandoned. It is to be brought to a **resting state**. The list below is finite and has an end; when it is done, this project is at rest and the work moves to his own teaching ([[the-turn-to-his-own-thoughts]], [[teachings-body]]).
+
+### ✅ THE CLEANUP LIST — everything left open, and nothing more
+
+1. **The segments** — the nine sessions (three a day, plus the Afterglow) drawn out of the eight 1990 tapes into a `segments` table in `Archive_Suggestions.db`. Candidates found, boundaries not yet confirmed. *(designed, half-done — see below)*
+2. **The twelve people seated today are on no screen.** People #49–60 plus Mary Webster and the voice index are read by no program. This is THE BREAK (`The Structure.md` §V) and it needs Saba's one ruling: where a confirmed name lands so a screen picks it up.
+3. **The relationship audit** — all 47 older relationship entries checked for (a) an evidence line, (b) any claim wearing Saba's name that he did not say.
+4. **7 B's transcript** — no single pass hears it; the original, the re-read and the cleaned read each catch different stretches. Decide whether to merge or leave.
+5. **The decoy files** — two 0-byte `Sermons.db` at `~/Desktop` and `/Volumes/Data/Video Archive/SQL Files/`. Delete on his word.
+6. **Untrack `mymemory.db`** from the public repo (he ruled the contents worthless; this is tidiness, not rescue).
+7. **The parked details below** — Max Mullins, the Mullins family, Virginia's sister, Ladima's row, Thomas Mullins' second.
+8. **Ask, don't search:** Taylor Keller (has the cassette-gathering record), John Bruffy (filmed 1990), RFOD, Paul Canada — for tapes 4, 5 and disc 6B. **Saba asks, never Claude.**
+
+Designed and written but NOT built, and not part of the cleanup unless he says so: `The Study Version.md`.
+
+
 **➡️ DESIGNED TODAY, NOT BUILT:** `The Study Version.md` in the repo root — Saba's shift from a Hebrew edition to a STUDY edition of A Voice in the Wilderness: the text and a voice, boxes that move together, touch-a-word-to-pause, the word lens driven by his own `html/Alphabet/a-z.json`, the READER choosing which meaning each letter carries and the page composing their reading live, the archive set beside every line, and the rulings. Each language read by people that community respects, a chapter each. Belongs in Jerry Keller's hands under EVM. Awaits his word.
 
 ## 🎬 IN PROGRESS — 2026-07-24 · SEGMENTS: the 1990 meetings drawn out of the tapes
