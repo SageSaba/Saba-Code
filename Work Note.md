@@ -1,5 +1,115 @@
 # Work Note
 
+## 🕯️ CLOSED 2026-07-25 (night) · THE NIGHT JOE WAS SEATED
+
+**Book: 162 people (was 160). Voiceprints: 8 (was 7). Raw Sermons.db: 3,026,090 lines (was 3,016,461) — +9,629, all additive, nothing existing altered or removed. Integrity ok on both databases.**
+
+### WHAT LANDED TONIGHT
+
+**① Four meetings that nothing had ever heard now have words.** svc **926** (1,712) · **934** (1,399) · **925** (3,048) · **933** (3,470). They held ZERO lines and had no caption file on disk. Read with large-v3-turbo from the `.mkv` already on the Data drive; loaded with the new tool `Archive Viewer/load_transcript.py`, which **refuses to write into any service that already holds lines**.
+
+**② The CalDigit card: all 8 camera originals preserved, every one checksum-verified.** 81 GB at `/Volumes/Data/Video Archive/Originals/2023_03 TRCF Weekend — camera originals/`, with a **READ ME** written for whoever comes later — what each file is, what is missing and why, and Saba's reason for keeping originals at all (the Beatles vault: *the released cut is not a lie, it is a choice*).
+
+**③ The map, matched by the WORDS not the clock** (new tool `Archive Viewer/match_originals.py`):
+| card file | camera | length | → service | released |
+|---|---|---|---|---|
+| `20230304FL1` | Floor Level 1 | 194m | **934 Spirit Soul Flesh** | 92m — **~100 min unseen** |
+| `20230304FL2` | Floor Level 2 | 118m | **932 Learning about the waiting model** (266 phrases) | 116m |
+| `20230304FL3` | Floor Level 3 | 218m | **933 Saturday evening of miracles** | 187m |
+| `MVI_0100`–`0104` | the Canon, wide from the back | 142m | **925 Sunday Morning** | 163m |
+
+**FL = FLOOR LEVEL — Saba's decode.** The three FL files are three camera positions, each holding a different session. **The March 5 batch (`DCIM/102_0305`, three Canon files named in `CVMISC/CV102.CTG`) was cleared off the card** — Saba cut it into the release, which is why 925 publishes LONGER than its only surviving original. Those minutes now exist only inside the finished video. **svc 926 (Friday morning) has no original on this card at all.** The phone (mobile shots) is unaccounted for; Saba: Elizabeth's drive is "not my workflow norm."
+
+**④ FL1's full 194 minutes read — 7,915 lines** (`transcripts_new/FL1_original.json`), 5.6× the published cut. **NOT loaded into the book** — that is a separate ruling.
+
+**⑤ SABA IS IN HIS OWN VOICE INDEX — voiceprint row 9, `Thomas Young 2023.npy`.** Built from svc 935 *Abide Not Accomplish* 26:00–30:00, anchor confirmed by his own ear: *"Those are me. My best."* Anchor core 23/23 windows; found at **0.94–0.98 across the whole 54 minutes** — he preaches it start to finish, proven by measurement. **FLAG KEPT ON THE ROW:** 0.801 vs Edward Helm 1992. Overruled by Saba with evidence: his ear (*"Edward had a high pitched, kind of feminine voice"*), and **measured pitch — Edward 173.9 Hz, Loran Helm 155.3, Saba 148.1**; every male print clusters 0.736–0.801 while every female sits ≤0.642, so the embedding is reading *male preacher on a room mic*. **STILL OWED: a control scan proving Saba's print does NOT fire on Edward's 1992 stretches.**
+
+**⑥ 🕯️ REV. JOSEPH NANCE SEATED — person #162, VIP.** Saba: *"fix him... it is required by me."* He had **no row at all** until tonight. Six services (incl. the **MALACHI sermon, 1989-11-26**, the chapter that is this archive's charter), mark #1 of the whole book (svc 644 @ 11:36, pierced ears), his teaching on union with Christ, and his father-in-law **Tom** — *"neither, just a guy"* (NOT Tom Mullins, NOT Saba, no surname, **do not guess**).
+
+**⑦ Bishop Daquan Baldwin seated — person #161, with the first PRIVATE row in the book.** New columns `private` (machine-readable) + `private_note`. Saba required him **included** and the grievance **sealed**. And Saba withdrew his own reading of the man's motive: *"it requires me to discern what was in his heart, and I really don't know."* WHAT HAPPENED stands; WHY is marked **UNKNOWN**; no one may restore it. **⚠️ NOTHING READS THE `private` FLAG YET** — every gate, connector and page predates it. Teach them before any of this book goes outward.
+
+**⑧ Seated with his rulings:** Gary Powell (#114) present svc 933 @ 01:54 — *"Somebody needs to get with Pastor Gary"*, ruled his because **"Gary Mann was not there"**; sang with the Gaithers and travelled with **Danny Gaither ~1987** (Saba confirmed the name). Sermon givers on **934, 935, 936 = Thomas Young** — his two messages, plus Trading Perspective marked TENTATIVE in his words. The rest of the 2023 set still has no giver.
+
+**⑨ The Toolbox talk box FIXED** — `rec` was capped at `trim 0 600`, dying silently after ten minutes while the red dot still claimed it was live. Relayed legs + watchdog, a fresh ear handed back before transcription, room silence dropped, `/mic/state` heartbeat. Save-point `~/.toolbox/server_before_rebuild_20260725_175340.py`.
+
+**⑩ `status.py` built** (`Archive Viewer/status.py`) — servers, workers, books, backups, drives, the Toolbox ear, in one read-only command.
+
+### SABA'S RULINGS TONIGHT — standing law
+- **A camera's date is NOT evidence.** It orders files within a shoot, nothing more. *(Applies to every card and DV dump.)*
+- **One audio thread, many viewpoints.** The words are read ONCE from the best sound; other angles are alternate video on the same timeline, **never new services**. *"The multi view may just be for me."*
+- **Keep the original so someone else can see and understand why that was chosen** — learned from the Beatles vault.
+- **A DREAM IS KEPT, NOT BUILT** — `~/Vault/Dreams/` with its own README. *"I know I wanted you to keep as a dream."*
+
+### WHAT THESE 2023 MEETINGS ARE
+Saba: *"This is the only time we minister like this without Joe."* And: *"realizing it was the last public meeting for over 2 years kinda makes it special."* He preached two of the messages — **Spirit Soul Flesh** the preamble, **Abide Not Accomplish** the message — Jerry and Taylor preached two, Bishop Daquan Baldwin a night, Bishop Josephine Flemmings the Friday morning. On his own preaching: *"I was full and took a swing at the fence"* (194 min recorded, cut to 92). On watching it back: **"I liked who I was."**
+
+### OPEN — nothing runs without his word
+1. **The control scan** on Saba's voiceprint vs Edward Helm 1992.
+2. **The edit layer** — line the FL1 original (7,915 lines) against released 934 and show every cut he made. *"You can see my edits as well."*
+3. **Teach the gates to honour `private`** before anything goes outward.
+4. **Load FL1's 7,915 lines?** Separate ruling; the book currently holds the released cut's words.
+5. **Seat the loose names** from the new words: **Sally Powell** (making dessert, asked prayer) and **Dennis** (taken to the ER while the room prayed) — svc 926 @ 01:19:08; **Tim** of Maranatha, the Rambo roadie who sang with the Gaither band and told Saba *"you may be the only person I know that still flows in that anointing"* — svc 327 @ 00:21:10.
+6. **Taylor's handout** from that weekend — Saba's ask, never Claude's. Belongs on **ChurchRecords**.
+7. **Joe's voice is on YouTube in someone else's hands** — whose channel, and how much more of him is there?
+8. **The phone footage** — two fixed cameras and a roaming phone; the phone is unaccounted for.
+
+### BACKUPS
+`~/Archive/Sermons_before_2023originals_20260725_182437.db` (1.4 GB, pre-write) · `~/Archive/Archive_Suggestions_QUICK_20260725_184637.db` · ACASIS `20260725_180012_own_words_rescue` · ACASIS `20260725_184637_quick` (books + whole Vault) · a final ACASIS copy after this close.
+
+---
+
+## 🎬 IN PROGRESS — 2026-07-25 · THE 2023 ORIGINALS OFF THE CALDIGIT CARD
+
+**Saba's word (engage):** *"in writing to Sermons file as you can… don't destroy existing. The multi view may just be for me."*
+
+**What is on the card** (`/Volumes/Untitled`, ExFAT, in the CalDigit reader — inserted today, footage from 2023): 8 files, 81 GB, two cameras, h264 1080p29.97 + AAC + **a third unidentified `data` stream** (that data stream is almost certainly the "Apple formatting" problem Saba remembered having to filter — the fix is a remux dropping it, no re-encode).
+- Camera A: `20230304FL1` 194m · `FL2` 118m · `FL3` 218m — one day, running 8:38am → 12:57pm → 6:45pm by the camera clock
+- Camera B: `MVI_0100`–`0104`, 142m total — **one recording split at 4 GB**, not five meetings
+
+**SABA'S RULINGS TODAY:**
+- **The camera's date is NOT evidence** — it orders files within a shoot, nothing more. The day comes from the record, the filename and his ear. (Card says 03-04, camera clock says 03-06, the book's title says 03-05.) *Applies to every card and DV dump from here on.*
+- **The meeting shape, from memory:** Friday night · Saturday morning · Saturday night · Sunday morning, and *"there could be one on Saturday afternoon"* — the card's 12:57pm file argues that afternoon was real.
+- **One audio thread only.** Three or four viewpoints of the same meeting; the words get read ONCE from the best sound. The other angles are alternate video on the same timeline — **NOT new services**. *"The multi view may just be for me."*
+- Who was in these meetings (his account): himself and **Rod Taylor** sharing, with **Jerry Keller**, **Bishop Flemmings**, **Daquan**. TRCF meetings, though they sit in the `Without Walls` folder.
+
+**THE GAP THIS FILLS:** services **925 · 926 · 933 · 934** are in the book with **no words at all** — no RawSegments and no `.en.srt` on disk (the other seven of the 2023 set got their words from YouTube captions). The card's originals are the originals of exactly these.
+
+**RUNNING NOW:** `Archive Viewer/retranscribe_service.sh 926 934 925 933` — reading the four from the `.mkv` already on the Data drive (~9 h of audio). **FILES ONLY** into `transcripts_new/`; log `wog2023_read.log`. The card is not being copied and is not touched.
+
+**🕯️ WHAT THESE MEETINGS ARE — Saba, 2026-07-25:** *"This is the only time we minister like this without Joe."*
+
+The 2023 Waiting-upon-God meetings (svc 925–935, the ones on the CalDigit card) are **the only meetings of this kind held without Joseph Nance** — *"my beloved partner in all this."* Whatever else these tapes are, they are that. Handle them knowing it. ([[joe-nance-archive-purpose]])
+
+Also received today: Joe's own teaching on **union with Christ**, seven distilled points, kept at `~/Vault/Union with Christ — conclusions (pasted 20260725).md` — source `https://youtu.be/XJWH8ef2hw0`, which YouTube would not let the machine read. **LEAD: Joe's voice is on YouTube in someone else's hands** — whose channel, and how much more of him is there?
+
+**🗣️ SABA'S WITNESS, SPOKEN 2026-07-25 — NOT YET SEATED (awaiting his word):**
+- **Gary Powell (person #114) is a singer.** *"He's sung with Bill and Gloria Gaither and traveled with his brother — Bill's brother."* One witness: Saba. His row currently says nothing about singing. **Claude's inference for him to rule:** Bill Gaither's brother is **Danny Gaither** (Bill Gaither Trio, toured widely) — proposed, NOT confirmed, not to be written as fact until Saba says so.
+- **Saba's own conjecture:** *"If I know me there's a good chance I called up Gary to sing to us."* ➡ The moment the four services have words, search them for Gary being summoned ("brother Gary," "would you sing"). If found: a moment, a voice in a service that holds no words, and a **singer's name for a blank song Part**.
+- **Camera B (the wide shot from the back) IS usable for identification** — Saba corrected Claude on this: *"I still would be able to ID. I saw Gary Powell and other people in the congregation."* He knows them by more than faces. ➡ Candidate: pull frames across the 142 minutes as a naming surface for **the people who were there but never spoke** — invisible to every text search in the archive. NOT started.
+- **The camera plan he wanted** (not what was shot on this card): one facing the congregation to see their faces when he speaks, one close-up on him, one long distance. The card has the close-up (Camera A, platform) and the long distance (Camera B, from the back). **No congregation-facing camera.**
+- **The multi-view he wants to ask for:** *"show me what the left camera and the center camera and the right camera were showing."* Buildable — the angles align for free by matching their common audio; naming which camera is left/center/right is Saba's ruling, not the machine's.
+
+**👥 WHO MINISTERED THAT WEEKEND — surfaced from the words read 2026-07-25, awaiting Saba's seating:**
+- **Saba preached two**, and *"mine were the connected"* — **Spirit Soul Flesh (svc 934) was the PREAMBLE** to his real message. He has watched the second one: *"I liked who I was."* ➡ **WHICH SERVICE IS THE SECOND MESSAGE? — not yet named. Link the pair when he says.**
+- **Jerry Keller** — svc 925 @ 00:59:31 *"Pastor Jerry's supposed to preach today."*
+- **Taylor Keller** (#112) — svc 925 @ 00:35:47 *"Come on down here Taylor"*; @ 00:41:12 *"I looked at Taylor."*
+- **Bishop Daquan BALDWIN** — surname found, svc 932 @ 01:51:53 *"Bishop thank you Daquan Baldwin."* He preached: svc 925 @ 00:42:31 *"That Bishop Dequan preached the night."* Also svc 933 @ 03:04:49. **HAS NO ROW IN THE PEOPLE BOOK.**
+- **Bishop Josephine Flemmings** (#108) — svc 926 @ 01:30:17 *"our sister Bishop Josephine has been bequeathed and given a message."*
+- **The book records NO sermon_giver for any of the twelve 2023 rows (925–936).** All blank.
+
+**📄 TAYLOR'S HANDOUT — an ask for Saba, never Claude.** Saba 2026-07-25: *"Taylor prepared a very good document that he passed out to people. I don't know what is contained of that document, but it was excellent."* The only non-video artifact of that weekend. Belongs on the **ChurchRecords** shelf (church paper, not a service) when it is found. Taylor is the likeliest keeper — he built his father's podcast archive unasked ([[first-invited-helpers]]).
+
+**Steps, in order:**
+1. Back up `~/Archive/Sermons.db` ☑ `~/Archive/Sermons_before_2023originals_20260725_182437.db` (1.4 GB, integrity ok, 2,635 services / 3,016,461 lines)
+2. Read the four unheard services to files ☐ *(running)*
+3. Write those words into the book — **purely additive**, four empty services get transcripts, nothing existing altered or removed ☐
+4. Match the card's originals against those words; bring Saba the map to rule ☐
+5. Record originals + alternate views **without disturbing `media_path`** — multi-view is his, not new rows ☐
+
+**If found half-done:** nothing is written yet; step 3 is the first write and the backup above restores the book.
+
+---
+
 ## 🚨 START HERE — 2026-07-25 · THE DAY THAT STUCK, AND WHAT WAS SAVED
 
 **Saba's own words:** *"We have spent the entire day putting together a new system that I called a new branch. And I begin to upload context that I've developed and it's incredibly valued to me. And then the thoughts for a new day and the session stack check, something stuck. And I don't have that information right now."*
