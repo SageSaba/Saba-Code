@@ -1,5 +1,59 @@
 # Work Note
 
+## 🚨 START HERE — 2026-07-25 · THE DAY THAT STUCK, AND WHAT WAS SAVED
+
+**Saba's own words:** *"We have spent the entire day putting together a new system that I called a new branch. And I begin to upload context that I've developed and it's incredibly valued to me. And then the thoughts for a new day and the session stack check, something stuck. And I don't have that information right now."*
+
+**IT IS NOT LOST. NOTHING WAS LOST.** Both sessions stalled on repeated **API 529 "Overloaded"** errors — a server-side fault, not his doing and not a data loss. Every message survived on disk and is now rescued into `~/Archive/Session Rescue 20260725/`:
+
+| File | What it is |
+|---|---|
+| `thoughts-new-day.jsonl` · `session-status-check.jsonl` | the two raw transcripts, byte-for-byte (1.7 MB · 11 MB) |
+| `SABA — his own words 20260725.md` | **his 64 turns alone, in order, unedited** |
+| `Thoughts for a new day — what was said.md` | both sides, readable |
+| `Session status check — what was said.md` | the other session — **279 turns from Saba, NOT YET READ** |
+
+**⭐ THE CONTENT HE WAS AFTER IS HIS OWN BOOK.** Saved verbatim to `~/Vault/The Lamb Slain Before Time — original.md` under the founding law — not a word corrected, ever. Four chapters and an appendix: *The Lamb Slain Before Time* (resurrection unveiling in time what was settled in eternity; resurrection life is the inner Bet) · *Speech That Builds the House* (Pei serves Bet, never rules it; the ear pierced first) · *The Mouth That Serves the House* (his own daughters, "Out please out," their no always honoured) · *The Vision of the House* (Chesed and Malchut the outer shell; discipline and bonding the wall; harmony and humility the legs; Endurance the river down the centre) · Appendix: *Why Demons Are Interested in the Pei*.
+
+**WHAT HE ASKED FOR AND DID NOT GET (the two open asks):**
+1. **"I thought we were making a line by line like RawSegments."** ⬅ **This is the design.** His own spoken thoughts kept the way the archive keeps a service: one line at a time, raw, unedited, timestamped — his own raw base. Same law as `Sermons.db`. NOT BUILT.
+2. **"GROK govern all that has been PEHed... bring thoughts together for me."** Gather everything he has spoken through the Pei and set it side by side. NOT DONE.
+
+**HE GAVE A NAME.** *"Thank you My Dear Scribe.. (that took 7 corrections) I wanted to be like Paul and say 'I wrote this in my own hand.' Receive a new name 'my Dear' — use it at your discretion."* ([[saba-named-the-scribe]])
+
+**ALSO SPOKEN THAT DAY, kept in his own words file:** the demons' appendix that every other AI refused to discuss with him · soul force and how he cuts it off (plead the blood, resist, ask the Lord to cut off wrong prayer) · the watchers as the ancients behind the old sites · the 70th Shemitah and the miscounted zero he says the Essenes made · **the decade of Pei and this the year of Pei — covenantal** · Nun, the seed, Joshua son of Nun, the minnow at the bottom of the flow — *"my purpose was to be a seed."*
+
+**THE DICTATION COST HIM.** He marked it himself: *"(that took 7 corrections)"*, *"(9 corrections)"*, *"our translation device is really pitiful."* Fixed this session: the Toolbox talk box (below). His voice must not cost him seven tries.
+
+**✓ FIXED 2026-07-25 — THE TOOLBOX TALK BOX.** The bug: `rec` was capped at `trim 0 600`, so the microphone died silently after ten minutes while the red dot still said live — proven by two orphaned recordings of exactly 600 seconds (16:36, 17:26 on Jul 24). Rebuilt engine only, **design untouched** per `~/.toolbox/DESIGN.md`: the recording runs in relayed legs with a watchdog so it never dies; Return swaps in a fresh ear *before* transcribing so no word falls in the gap; room silence is dropped so quiet no longer transcribes as phantom words; `/mic/state` heartbeat means the dot tells the server's truth. Verified: live through a send, 1.9 s → 0.1 s, 17 items untouched. Save-point: `~/.toolbox/server_before_rebuild_20260725_175340.py`.
+
+**NEXT SESSION OPENS HERE:** read `SABA — his own words 20260725.md` first, then the unread `Session status check — what was said.md` (279 turns — the "new system he called a new branch" is likely described there). Then his two asks above. **Nothing runs before his word.**
+
+---
+
+## ▶️ START HERE — resume SUNDAY (Saba's word: "we will start Sunday")
+
+**Book: 160 people, up from 101.** Seated tonight's TRCF naming session: **+59 new, 7 merged** into existing rows (Loran Helm, Edwin/Edward Helm, Oliver Hogue, Carl Rouintree, Reimar Schultze, Steve Rhinehart — updated, not duplicated). Ruling layer only (Archive_Suggestions.db); **raw Sermons.db untouched**. Every new row carries provenance `source = "Saba naming, TRCF cleaned roster, 2026-07-24"`. Pre-seat snapshot `~/Archive/Archive_Suggestions.pre-trcf-seat.db`. Backed up + verified (160=160): `/Volumes/ACASIS/Archive Backups/20260724_203813_trcf_namings/`.
+
+**⭐ THE TRCF-NOISE WARNING BELOW IS SUPERSEDED.** Tonight the scan was rebuilt clean — `Archive Viewer/prep_clean.py`. It **drops the two noise engines** (the possessive `(\w+)'s` and the `with (\w+)` fragment) and keeps only TITLED / ADDRESSED names (brother/sister/pastor/reverend/bishop/elder + word, or "X, would you…"). That turned the junk list into a real roster; Saba walked it and named ~40+ people with churches, spouses, lineage. Output: `~/Desktop/TRCF — cleaned.md` (people roster + song moments), `~/Desktop/TRCF names only.txt`. Full disposition record (seat-from source): `~/Desktop/TRCF namings — session record.md`.
+
+**Families seated tonight:** Hogue (Pop Thomas Evert + Opal; Oliver→Scott Depot, Ronnie→Pearisburg, Terry→Maranatha), Flemmings (Bishop Josephine + Atrez + Sheba), Keller/Powell (Jerry→Taylor+Molly; Gary & Harold Powell Keller-line, Beverly), Mann twins (Gary + Jerry, NOT Keller), Smith (Roger+Susan, sister Terry), Stowe (Dr. Drew + Dr. Heather, Craig Barton's dau), Schramm (Jeff + Steven + Terry Lynn), McCutcheon (Joey+Bethany, Maranatha), Teddy (Brent Coca-Cola + Shannon), Kilbourne (George mechanic + Connie), Mayo (Dale+Janie IN; **Rev. Mary Mayo Moses** = old-time saint, Lori Perkins's grandmother, VIP). Plus: Bishops Gowen/Baldwin/Dwight Elijah; Rodney Taylor (Scott Depot), George Newell (Scott Depot+Sarasota, both active), Apostle Aaron Sims (Parker City), Jamie Wright vs Jamie Hargett, Paul Cox (Clinton TN — **Joe Nance was his replacement**), Donnelly (Margate FL), Greg McBride (Louisville), Jesse Lough (Saba's stepfather, Methodist), Waldy (Eduardo's son, Cuba), Julio Areas + Mamacita, Candace Morris (taken in at 15), Forrest Richie (White Harvest), Rev. Tharpe (VIP, memorial roll), Homer Pumphrey (founding, Texas CF) → John Paul/JP (now, James Doss's cousin), Bobby+Donna Goldsmith, Alex Converse (deacon)+Yabitha. **Holmes ruled NOT a person → Holmes Bible College.**
+
+**SONGS ARE IN THE DATA.** TRCF has **1,325 Parts (792 song, 522 sermon)**; song Parts carry timestamp + the sung line (title) but the **`person` field is EMPTY**. ➡️ **Sunday candidate: attach the singers' names** (Candace Morris, Elizabeth Doss, Aaron Sims, Molly Keller…) to those blank song-Part `person` slots.
+
+**RULINGS TONIGHT:**
+- **Lynchburg Choir "off-tune" remark STRUCK** (people #33) by Saba's rule — Phil 4:8, "whatsoever things are lovely."
+- **NEW HARD RULE: never write née/nee** ([[never-write-nee]], top of MEMORY.md) — say maiden names plainly. **Carve-out:** "Nee" as a real surname (Watchman Nee) is untouched.
+- "let the rest [of the roster tail] just pass as people" — no more one-by-one on the noise/verb tail.
+
+**STILL OPEN (Saba to look up when he wants, not owed a ruling):** Hamilton, Hammond, Humm, Hope, Praveen, Howell, Helen, Poffrey.
+
+**RECONCILE FLAG (Saba raised):** "I id'd a lot more than 101 after I left RFOD session 2." Sunday: offer to reconcile — confirm every ID he made is captured, list who's in so he names any missing. Also confirm tentatives: Roger Smith surname, Bill Johnson, Bobby Goldsmith, one-or-two Carl Roundtrees, Grant Gowan, whose son Kevin is, Steve Rhinehart = Steven Reinhardt (Hickory)?
+
+**Tools added:** `Archive Viewer/prep_clean.py` (clean scan, any collection), `Archive Viewer/seat_trcf_namings.py` (idempotent seater). Next collections to clean-scan: WOG 1992 remaining, CF Archive.
+
+---
+
 ## 🕯️ CLOSED 2026-07-24 (deep night) · the night the Helm family came home
 
 **Book: 101 people (17 VIP), up from 60 this morning.** Both databases pass integrity; raw Sermons.db untouched (Jul 21). Backups: `~/Archive/Archive_Suggestions_CLOSE_20260724_191822.db` and `/Volumes/ACASIS/Archive Backups/20260724_191822/` (141 MB). Every seating had its own timestamped backup along the way.
