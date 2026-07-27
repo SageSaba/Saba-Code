@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archive Game — High Scores</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #000;
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .cabinet {
+    background: #1a1a2e;
+    border: 8px solid #333;
+    border-radius: 12px;
+    box-shadow: 0 0 40px rgba(0, 255, 0, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+  }
+
+  .screen {
+    background: #000;
+    border: 4px solid #0f0;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.2);
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    text-shadow: 0 0 10px #0f0;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: #0a0;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+  }
+
+  .progress {
+    background: #0a0a1a;
+    border: 2px solid #0f0;
+    padding: 12px;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  .progress-label {
+    font-size: 11px;
+    color: #0a0;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar {
+    background: #000;
+    border: 1px solid #0f0;
+    height: 20px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .progress-fill {
+    background: #0f0;
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s;
+    box-shadow: 0 0 10px #0f0;
+  }
+
+  .progress-text {
+    font-size: 13px;
+    font-weight: bold;
+  }
+
+  .scores-label {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 10px;
+  }
+
+  .scores {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 8px;
+    border-bottom: 1px dotted #0a0;
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .score-row:last-child {
+    border-bottom: none;
+  }
+
+  .score-rank {
+    color: #0a0;
+    width: 30px;
+    text-align: center;
+  }
+
+  .score-rank.top3 { color: #ff0; }
+
+  .score-name {
+    flex: 1;
+    padding: 0 10px;
+    text-align: center;
+    color: #0f0;
+    letter-spacing: 1px;
+  }
+
+  .score-name.top1 { color: #ffff00; }
+  .score-name.top2 { color: #ffaa00; }
+  .score-name.top3 { color: #ff6600; }
+
+  .score-points {
+    width: 80px;
+    text-align: right;
+    color: #0f0;
+  }
+
+  .score-points.top3 { color: #ff0; }
+
+  .empty-scores {
+    color: #0a0;
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 13px;
+  }
+
+  .footer {
+    text-align: center;
+    font-size: 10px;
+    color: #0a0;
+    margin-top: 15px;
+    letter-spacing: 1px;
+  }
+
+  .footer-line {
+    margin: 8px 0;
+  }
+
+  /* Scrollbar styling */
+  .scores::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scores::-webkit-scrollbar-track {
+    background: #000;
+    border-left: 1px solid #0f0;
+  }
+
+  .scores::-webkit-scrollbar-thumb {
+    background: #0f0;
+    border-radius: 4px;
+  }
+
+  .scores::-webkit-scrollbar-thumb:hover {
+    background: #0a0;
+  }
+
+  @media (max-width: 480px) {
+    .cabinet {
+      padding: 15px;
+    }
+
+    .screen {
+      padding: 15px;
+      min-height: auto;
+    }
+
+    .title {
+      font-size: 20px;
+    }
+
+    .score-row {
+      font-size: 12px;
+      padding: 8px 6px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="cabinet">
+  <div class="screen">
+    <div class="title">★ ARCHIVE ★</div>
+    <div class="subtitle">H I G H   S C O R E S</div>
+
+    <div class="progress">
+      <div class="progress-label">GAME PROGRESS</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text"><span id="verified">0</span> / 1079 NAMES</div>
+    </div>
+
+    <div class="scores-label">TOP PLAYERS</div>
+
+    <div class="scores" id="scoresList">
+      <div class="empty-scores">
+        ▓▒░ NO SCORES YET ░▒▓<br>
+        BE THE FIRST TO PLAY
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-line">★ IDENTIFY · VERIFY · CONNECT ★</div>
+      <div class="footer-line">THE NAMES BECOME THE PEOPLE</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Mock data for demo
+  const mockScores = [
+    { rank: 1, name: "---", points: 0 },
+    { rank: 2, name: "---", points: 0 },
+    { rank: 3, name: "---", points: 0 },
+  ];
+
+  function renderScores(scores) {
+    const list = document.getElementById('scoresList');
+
+    if (scores.length === 0) {
+      list.innerHTML = '<div class="empty-scores">▓▒░ NO SCORES YET ░▒▓<br>BE THE FIRST TO PLAY</div>';
+      return;
+    }
+
+    list.innerHTML = scores.map((score, idx) => {
+      const rank = idx + 1;
+      const isTop3 = rank <= 3;
+      return `
+        <div class="score-row">
+          <div class="score-rank ${isTop3 ? 'top3' : ''}">
+            ${rank === 1 ? '★' : rank === 2 ? '◆' : rank === 3 ? '▲' : rank + '.'}
+          </div>
+          <div class="score-name ${rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : ''}">
+            ${score.name}
+          </div>
+          <div class="score-points ${isTop3 ? 'top3' : ''}">
+            ${score.points.toLocaleString()}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateProgress(verified, total) {
+    const percent = (verified / total) * 100;
+    document.getElementById('progressFill').style.width = percent + '%';
+    document.getElementById('verified').textContent = verified;
+  }
+
+  // Initial render
+  renderScores(mockScores);
+  updateProgress(0, 1079);
+
+  // Fetch real scores from backend (when ready)
+  // fetch('/api/scores').then(r => r.json()).then(data => {
+  //   renderScores(data.scores);
+  //   updateProgress(data.verified, 1079);
+  // });
+</script>
+
+</body>
+</html>
