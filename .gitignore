@@ -43,3 +43,7 @@ xcuserdata/
 
 # --- session and worktree scratch
 .claude/
+
+# the exclusion ledger — never travels
+exclusions.json
+*exclusions*.json
