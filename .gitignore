@@ -3,7 +3,9 @@
 # Databases, backups, media and machine litter do not.
 
 # --- databases: the book and the ruling layer live in ~/Archive, never here
-*.db
+# *.db allowed as of 2026-08-05, Saba's word ("at least for now") — the real
+# Sermons.db / Archive_Suggestions.db still live outside this repo in ~/Archive;
+# nothing here pulls them in automatically. Revisit this ruling later.
 *.db-shm
 *.db-wal
 *.sqlite
