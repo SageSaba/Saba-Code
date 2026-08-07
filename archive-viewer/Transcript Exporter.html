@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transcript Exporter</title>
+<style>
+  /* Same dress as the Archive Viewer. */
+  :root {
+    --bg: #f3f3f0; --panel: #ffffff; --field: #eae9e5; --ink: #1d1d1f;
+    --ink-2: #6f6f74; --line: #d8d7d3; --accent: #2456c8; --accent-soft: #e3ebfb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161617; --panel: #222224; --field: #2d2d30; --ink: #f0f0f2;
+      --ink-2: #a0a0a6; --line: #3a3a3e; --accent: #6f9bff; --accent-soft: #24314f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 8px 10px 20px;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px; line-height: 1.45;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .panel-head {
+    padding: 6px 10px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .panel-head .count { color: var(--ink-2); font-weight: 400; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; }
+  .bar label { color: var(--ink-2); font-size: 13px; }
+  input[type="date"] {
+    background: var(--field); border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 10px; font: inherit; color: var(--ink); min-height: 36px;
+  }
+  button {
+    font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--line);
+    background: var(--field); color: var(--ink); border-radius: 8px; min-height: 36px;
+    padding: 0 12px; cursor: pointer;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .svc { display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-bottom: 1px solid var(--line); }
+  .svc:last-child { border-bottom: none; }
+  .svc label { flex: 1; cursor: pointer; }
+  .svc .meta { font-size: 11px; color: var(--ink-2); }
+  .empty { padding: 12px; color: var(--ink-2); }
+
+  #out {
+    display: block; width: 100%; min-height: 420px; border: none; border-top: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); padding: 10px 12px; font: 14px/1.5 "SF Mono", Menlo, monospace;
+    resize: vertical;
+  }
+  .status { color: var(--ink-2); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="panel">
+    <div class="bar">
+      <label>Start Date <input type="date" id="from"></label>
+      <label>End Date (optional) <input type="date" id="to"></label>
+      <button id="clearDates">Clear Dates</button>
+      <button class="primary" id="getServices">Get Services</button>
+      <span class="status" id="status"></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span>Matching services</span>
+      <span><label style="font-weight:400"><input type="checkbox" id="selectAll"> Select All</label>
+      <span class="count" id="svcCount">—</span></span>
+    </div>
+    <div id="services"><div class="empty">Enter a date above and press Get Services.</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="bar">
+      <label><input type="checkbox" id="optHeading" checked> Service heading</label>
+      <label><input type="checkbox" id="optTimes" checked> Timestamps</label>
+      <label><input type="checkbox" id="optSpeakers" checked> Speaker names</label>
+      <label><input type="checkbox" id="optParas" checked> Readable paragraphs</label>
+      <button class="primary" id="loadBtn">Load Transcript</button>
+      <button id="copyBtn">Copy All</button>
+      <button id="clearBtn">Clear Transcript</button>
+      <button id="dlBtn">Download as TXT</button>
+    </div>
+    <textarea id="out" spellcheck="false"
+      placeholder="The full transcript appears here — an ordinary text box: Command+A selects all, Command+C copies, mouse selection works."></textarea>
+  </div>
+
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const status = msg => { $("status").textContent = msg; };
+  let loaded = null;   // raw segments from the last Load Transcript
+
+  const fmtT = s => {
+    s = Math.max(0, Math.floor(s));
+    const h = String(Math.floor(s / 3600)).padStart(2, "0");
+    const m = String(Math.floor(s % 3600 / 60)).padStart(2, "0");
+    const sec = String(s % 60).padStart(2, "0");
+    return h + ":" + m + ":" + sec;
+  };
+
+  // ---- dates + service list -------------------------------------------
+  $("clearDates").addEventListener("click", () => {
+    $("from").value = ""; $("to").value = ""; status("");
+  });
+
+  async function getServices() {
+    const from = $("from").value, to = $("to").value;
+    if (!from && !to) { status("Enter a Start Date first."); return; }
+    status("searching…");
+    let data;
+    try {
+      const res = await fetch("/api/services?from=" + (from || to) + "&to=" + (to || from || ""));
+      data = await res.json();
+    } catch { status("Could not reach the exporter — is it still running?"); return; }
+    if (data.error) { status(data.error); return; }
+    const list = data.services || [];
+    $("svcCount").textContent = list.length + " found";
+    $("selectAll").checked = false;
+    const box = $("services");
+    box.innerHTML = "";
+    status("");
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">No services in that range.</div>';
+      return;
+    }
+    for (const s of list) {
+      const div = document.createElement("div");
+      div.className = "svc";
+      const speakers = s.speakers.length ? s.speakers.join(", ") : s.main_preacher;
+      div.innerHTML = '<input type="checkbox" class="pick" value="' + s.service_id + '">' +
+        '<label>' + s.date + (s.title ? " — " + esc(s.title) : "") +
+        '<div class="meta">' + (speakers ? "speakers: " + esc(speakers) + " · " : "") +
+        "service ID " + s.service_id + '</div></label>';
+      div.querySelector("label").addEventListener("click", e => {
+        const cb = div.querySelector(".pick");
+        cb.checked = !cb.checked;
+        e.preventDefault();
+      });
+      box.appendChild(div);
+    }
+  }
+  $("getServices").addEventListener("click", getServices);
+  $("selectAll").addEventListener("change", () => {
+    document.querySelectorAll(".pick").forEach(cb => cb.checked = $("selectAll").checked);
+  });
+
+  const esc = s => (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
+  // ---- transcript formatting ------------------------------------------
+  // Join short consecutive segments (same speaker, small gap) into readable
+  // paragraphs. Order preserved; the words themselves are never altered.
+  function paragraphs(segments) {
+    const out = [];
+    for (const seg of segments) {
+      const last = out[out.length - 1];
+      if (last && last.speaker === seg.speaker &&
+          seg.start - last.end <= 3 && (last.text.length + seg.text.length) < 700) {
+        last.text += " " + seg.text.trim();
+        last.end = seg.end;
+      } else {
+        out.push({ start: seg.start, end: seg.end,
+                   speaker: seg.speaker, text: seg.text.trim() });
+      }
+    }
+    return out;
+  }
+
+  function render() {
+    if (!loaded) return;
+    const withHeading = $("optHeading").checked;
+    const withTimes = $("optTimes").checked;
+    const withSpeakers = $("optSpeakers").checked;
+    const withParas = $("optParas").checked;
+    const blocks = [];
+    for (const svc of loaded) {
+      const lines = [];
+      if (withHeading) {
+        lines.push(svc.date + (svc.title ? " — " + svc.title : ""));
+        // Name who actually speaks in the transcript, not the Services
+        // table's main_preacher entry (known to hold wrong names).
+        const names = [...new Set(svc.segments.map(s => s.speaker).filter(Boolean))];
+        if (names.length) lines.push("Speaker" + (names.length > 1 ? "s" : "") + ": " + names.join(", "));
+        lines.push("");
+      }
+      const rows = withParas ? paragraphs(svc.segments) : svc.segments;
+      for (const r of rows) {
+        let line = "";
+        if (withTimes) line += fmtT(r.start) + "\t";   // time as its own column
+        if (withSpeakers && r.speaker) line += r.speaker + ": ";
+        line += r.text;
+        lines.push(line);
+        if (withParas) lines.push("");
+      }
+      blocks.push(lines.join("\n").replace(/\n+$/, "\n"));
+    }
+    $("out").value = blocks.join("\n" + "=".repeat(50) + "\n");
+  }
+
+  async function loadTranscript() {
+    const ids = [...document.querySelectorAll(".pick:checked")].map(cb => cb.value);
+    if (!ids.length) { status("Tick at least one service in the list."); return; }
+    status("loading transcript…");
+    let data;
+    try {
+      const res = await fetch("/api/transcript?ids=" + ids.join(","));
+      data = await res.json();
+    } catch { status("Could not reach the exporter — is it still running?"); return; }
+    if (data.error) { status(data.error); return; }
+    loaded = data.services || [];
+    render();
+    const n = loaded.reduce((a, s) => a + s.segments.length, 0);
+    status(loaded.length + " service(s), " + n + " transcript lines loaded.");
+  }
+  $("loadBtn").addEventListener("click", loadTranscript);
+  ["optHeading", "optTimes", "optSpeakers", "optParas"].forEach(id =>
+    $(id).addEventListener("change", render));
+
+  // ---- output buttons ---------------------------------------------------
+  $("copyBtn").addEventListener("click", async () => {
+    const out = $("out");
+    if (!out.value) { status("Nothing to copy yet."); return; }
+    try { await navigator.clipboard.writeText(out.value); }
+    catch { out.select(); document.execCommand("copy"); }
+    status("Copied " + out.value.length + " characters to the clipboard.");
+  });
+  $("clearBtn").addEventListener("click", () => {
+    $("out").value = ""; loaded = null; status("Transcript cleared.");
+  });
+  $("dlBtn").addEventListener("click", () => {
+    const out = $("out");
+    if (!out.value) { status("Nothing to download yet."); return; }
+    const from = $("from").value || "transcript", to = $("to").value;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([out.value], { type: "text/plain" }));
+    a.download = "transcript " + from + (to && to !== from ? " to " + to : "") + ".txt";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    status("Downloaded as " + a.download);
+  });
+</script>
+</body>
+</html>
