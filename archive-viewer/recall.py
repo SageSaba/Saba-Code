@@ -32,7 +32,9 @@ sermon book.
 ## Usage
 
     recall.py build                 # index the memory files (fast, ~100)
+    recall.py build --vault         # also index the Vault + Secondary Wisdom
     recall.py build --history       # also index Sir Archive (slow, one-time)
+    recall.py build --all           # everything
     recall.py "how should I correct him"          # ask memory
     recall.py "the red alert" --history           # ask our actual history
     recall.py "voiceprint" --both -n 8            # both, 8 results
@@ -44,6 +46,10 @@ import json, os, re, sqlite3, sys, urllib.request, math, time
 
 MEMORY_DIR = "/Users/saba/.claude/projects/-Users-saba-Desktop-Saba-Code/memory"
 CONVERSATIONS = "/Users/saba/Archive/Conversations.db"
+# The Vault — his own writings, and the Secondary Wisdom shelf he keeps beside them.
+# Added 2026-08-08 at his word: "These are a few of the things that determine who I
+# want to be... Remind me in your lovely matrix."
+VAULT = "/Users/saba/Vault"
 INDEX = "/Users/saba/Archive/Recall.db"
 OLLAMA = "http://127.0.0.1:11434"
 EMBED_MODEL = "nomic-embed-text"
@@ -139,6 +145,45 @@ def build_memory(db):
     return n
 
 
+def build_vault(db):
+    """His own writings, and the borrowed wisdom he keeps beside them.
+
+    Two kinds, kept apart on purpose — 'his own' is Saba's word and outranks
+    everything; 'secondary' is water carried from somewhere else and never rules.
+    Same discipline as a machine voice wearing its label.
+    """
+    if not os.path.isdir(VAULT):
+        print("no Vault directory"); return 0
+    db.execute("DELETE FROM shard WHERE body='vault'")
+    n = 0
+    for root, dirs, files in os.walk(VAULT):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for f in sorted(files):
+            if not f.endswith(".md"):
+                continue
+            path = os.path.join(root, f)
+            rel = os.path.relpath(path, VAULT)
+            kind = "secondary" if rel.startswith("Secondary Wisdom") else "his own"
+            try:
+                txt = open(path, encoding="utf-8", errors="ignore").read()
+            except OSError:
+                continue
+            title = f[:-3]
+            for i, piece in enumerate(chunk_text(txt)):
+                blob = f"{title}\n\n{piece}"[:CHUNK]
+                db.execute(
+                    "INSERT INTO shard (body, ref, kind, title, when_, text, vec) "
+                    "VALUES ('vault',?,?,?,?,?,?)",
+                    (rel if i == 0 else f"{rel} ({i+1})", kind, title, "",
+                     piece[:4000], json.dumps(embed(blob))))
+            n += 1
+            if n % 10 == 0:
+                db.commit()
+                print(f"  …{n} vault documents", flush=True)
+    db.commit()
+    return n
+
+
 def build_history(db, min_chars=120):
     """Index Saba's own words from Sir Archive. His messages only — what he
     actually said is the witness; my replies are commentary on it."""
@@ -187,7 +232,11 @@ def ask(question, bodies, n=5):
 
     for score, (body, ref, kind, title, when_, text, _) in scored:
         head = f"[{score:.2f}] "
-        if body == "memory":
+        if body == "vault":
+            label = "HIS OWN WRITING" if kind == "his own" else "SECONDARY WISDOM"
+            print(head + f"{label}  {ref}")
+            print(f"        {' '.join(text.split())[:280]}…\n")
+        elif body == "memory":
             head += f"MEMORY  {ref}" + (f"  ({kind})" if kind else "")
             print(head)
             if title:
@@ -208,7 +257,11 @@ def main():
         print("indexing memory…")
         n = build_memory(db)
         print(f"  {n} memories indexed")
-        if "--history" in sys.argv:
+        if "--vault" in sys.argv or "--all" in sys.argv:
+            print("indexing the Vault (his own writings + Secondary Wisdom)…")
+            v = build_vault(db)
+            print(f"  {v} vault documents indexed")
+        if "--history" in sys.argv or "--all" in sys.argv:
             print("indexing Sir Archive (Saba's own messages)…")
             m = build_history(db)
             print(f"  {m} messages indexed")
@@ -219,10 +272,14 @@ def main():
     n = 5
     if "-n" in sys.argv:
         n = int(sys.argv[sys.argv.index("-n") + 1])
-    if "--both" in sys.argv:
+    if "--all" in sys.argv:
+        bodies = ["memory", "history", "vault"]
+    elif "--both" in sys.argv:
         bodies = ["memory", "history"]
     elif "--history" in sys.argv:
         bodies = ["history"]
+    elif "--vault" in sys.argv:
+        bodies = ["vault"]
     else:
         bodies = ["memory"]
     ask(question, bodies, n)
