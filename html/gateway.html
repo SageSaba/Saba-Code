@@ -256,14 +256,25 @@
 </div>
 
 <script>
-  // After Tailscale sign-in, put the funnel address here (keep the quotes):
-  const BACKEND = "REPLACE-WITH-FUNNEL-ADDRESS";  // e.g. https://sabas-mac-mini.tailXXXX.ts.net
+  // Backend URL for the connector API. Defaults to localhost for development,
+  // or reads from localStorage 'backend_url' for remote Tailscale access.
+  // To set for remote access: localStorage.setItem('backend_url', 'https://your-tailscale.ts.net')
+  const BACKEND = (() => {
+    const stored = localStorage.getItem('backend_url');
+    if (stored) return stored;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) return 'http://127.0.0.1:8766';
+    // For other scenarios, user must set via localStorage
+    console.warn('BACKEND not configured. Set via: localStorage.setItem("backend_url", "https://your-address.ts.net")');
+    return null;
+  })();
   const $ = id => document.getElementById(id);
   const esc = s => (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 
   async function ask() {
     const question = $("q").value.trim();
     if (question.length < 3) { $("status").textContent = "Type a question first."; return; }
+    if (!BACKEND) { $("status").textContent = "Backend not configured. Run in browser console: localStorage.setItem('backend_url', 'https://your-address.ts.net')"; return; }
     $("askBtn").disabled = true;
     $("answer").className = "empty";
     $("answer").textContent = "…";
