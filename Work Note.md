@@ -1,5 +1,105 @@
 # Work Note
 
+## 🕯️ CLOSED 2026-08-10 · THE DAY THE TWO BOOKS WERE TOLD APART
+
+**Voice Gate resurrected and running. 133+ services gained words from the backlog. And the archive's real shape finally written down: TWO databases, not one.**
+
+### ⚠️ THE CORRECTION THAT MATTERS MOST — TWO BOOKS
+
+**`~/Archive/Sermons.db` holds THE WORDS.** 2,697 services · 3,166,433 lines · Parts · Summaries · Meanings.
+
+**`~/Archive/Archive_Suggestions.db`, table `people`, holds THE PEOPLE.** 221 rows, with `private` + `private_note` (8 flagged), `vip`, `aliases`, `relationships`, `photo_path`. Joe Nance #162 · Baldwin #161 · Georgine Christiansen #181 · Bishop Josephine Flemmings #108 · Sheba Flemmings #110 · the whole Barton family.
+
+**`Speakers` in Sermons.db is a 20-row FOSSIL — not the people book.** Its emptiness means nothing.
+
+**How this was learned, kept honestly:** an afternoon was spent reporting that Bishop Josephine Flemmings and Sheba Flemmings "had no seat in the book," then seating them — when both had been seated all along, the surname already ruled **Flemmings**, and Josephine already carrying **Bishop**, the ordination the 2016 transcripts said was coming. The wrong book was queried, with confidence. Duplicate rows were written into Sermons.db `Speakers` and then removed; backup `Sermons_20260810_155732_before_seating_flemings.db` holds the state before. **Checking *a* book and calling it *the* book is worse than not checking.** Also settled: the `private` flag Saba asked about **does exist** — earlier reports it was missing were reading the fossil. Saba's own word on why the split exists: *"You didn't choose to separate yourself from your previous life. I did, and I want to keep my previous life, which makes it confusing."*
+
+### THE RECORDING HISTORY OF THAT ROOM — established from Saba's memory, confirmed by the files
+
+**26 services hold picture and no sound.** 23 from Apr–Aug 2017, plus 5 in 2019. Every one is video-only; no audio stream exists in the container.
+
+- **2016** — phones into **Livestream Inc** (Saba's "ghetto cam"). Every `.sd` file carries audio; the phone captured its own sound. The `YYYY_MM_DD__HH_MM_SS Title.sd/.hd.mp4` naming is Livestream's export format, not a camera's.
+- **Apr 9 – Aug 6, 2017** — the three-camera rig: **front left, back center, right floor**, into a **video mixer** in the back, one sound out to a **room audio mixer**. Audio was never wired into the video chain, and they had not started broadcasting — so the sound went to the room and nothing recorded it. Saba: *"we were first trying it out, and we simply didn't catch that we didn't have the sound."*
+- **Aug 9, 2017 onward** — solved. Never happened again.
+
+**The file evidence agrees exactly:** Jan 4 – Apr 2, 2017 → every service has audio. Apr 9 – Aug 6 → intermittent, silent and sound interleaved service by service (the signature of a learning season, not equipment failure). Aug 9 – Dec 31 → every service has audio.
+
+**So those words are gone — never recorded, not misplaced.** Nobody need hunt for them again. Searched and cleared today: Data drive (audiobooks only), Backup Data, iCloud, OneDrive, Sermon Notes, Documents/Audio. **Duration matching was tried and DISPROVED** — with 1,970 transcribed services in a narrow band of runtimes, a random length has ~70% odds of a "match" within 120 seconds, median 5 candidates. It has no discriminating power. Saba added the killing objection himself: sound could run while the camera stopped, so equal length proves nothing at all.
+
+### ALSO ESTABLISHED
+
+- **The Sukkot 2013 audio is not lost** — all **51 mp3s**, 1.26 GB, exact filename match to all 51 book rows, sitting in `~/Library/Mobile Documents/.../Desktop/Sermon Notes/2013/Sukkot 2013/`. The book's paths broke because **the Desktop itself moved into iCloud**. ⚠️ Against Saba's own no-cloud law, this collection currently lives ONLY in iCloud and OneDrive — not on any drive he owns. **Bringing it home is owed.**
+- **The 1997 WOG tapes are each in the book TWICE** — svc 2525/2649, 2527/2650, 2507/2646, 2508/2647, 2524/2648. Same media, same line counts; the 25xx set carries `org=RFOD`, the 26xx set has cleaner titles and empty org. Ten rows where there should be five. **Unruled.**
+- **WD10 is EMPTY** — 1.8 TB, 704 KB used, zero entries. One of the four backup layers. **Saba has not said whether this is expected.**
+- **Voice Gate** — was frozen in REVIEW state since the night before. `wait_review_control()` **ignores F13 by design** (its own docstring says so), so any restate not cleared with F15 deafens the gate permanently. Workaround: press F15, then F13. Relaunching it from a machine-launched process broke it worse — macOS TCC killed the Swift mic helper with SIGABRT for having no `NSSpeechRecognitionUsageDescription`; a bare CLI binary inherits mic permission from whatever launches it, so it must be started from Terminal. Fixed with `~/Desktop/Start Voice Gate.command` → `~/bin/run_voice_gate.exp`, out of the dead session scratchpad it had been living in.
+- **The transcription backlog** — `archive-viewer/transcribe_backlog.py`, new tool. 427 services held zero lines; 259 had media. 133+ landed today. Bug found and fixed mid-run: a **zero-byte `.txt` was being read as "already transcribed,"** silently skipping 28 services.
+- **`~/Archive/Bible`** — 15 public-domain translations as CSV (`Book,Chapter,Verse,Text`, 31,102 rows each): KJV · AKJV · ASV · YLT · Darby · BBE · BSB · Webster · DRC · Tyndale · Wycliffe · Noyes, plus **WLC** (Hebrew), **TR** and **Byz** (Greek). Desktop shortcut placed — Archive is non-synced but was unreachable from where he works.
+
+### STANDING RULINGS — 2026-08-10
+
+- **A camera's date is not evidence; a child's age is.** — *dating any footage* · Saba dated svc 696 to ~2015 by April being about five, against a filename saying 2017. Barbara's mother present in the same footage sets a hard ceiling. The recorder's clock loses to the room.
+- **Read the rig off the geometry.** — *attributing files to cameras* · Saba names the camera from the angle alone — front left, back center, right floor — the only evidence that depends on neither clock nor filename. The machine measures; he identifies. Same shape as the voiceprint law.
+- **Ask a person for their wisdom, not for their story.** — *receiving anyone's testimony* · The story comes only if they decide it does. Asking for material turns a real question into a collection, and that is what makes a person close.
+- **Statistical power must be tested before a match is reported.** — *any matching claim* · A test that "matches" 26 of 28 is measuring the density of the candidate pool, not the truth.
+
+### THE EVENING — A HEBREW STUDY INSTRUMENT, AND THE TURN TO THE FEASTS
+
+**A whole Bible study system built from nothing, then a turn toward the High Holy Days with his full heart.**
+
+**`~/Desktop/Tay_Bible.sql`** — 16 public-domain translations, both testaments word-tagged with Strong's, BDB (Hebrew by root), and the **LXX bridge** (4,873 Greek→Hebrew links, so a NT word follows back to the Hebrew the Septuagint rendered — his stated aim, "NT ideas through a Hebrew lens"). All in `~/Archive/Bible/` with Desktop shortcuts (Archive is non-synced; he couldn't reach it). Full detail in memory [[hebrew-study-tools]].
+
+**The reader — `flow.py`, localhost:8772** — a line of scripture, English + Hebrew + plain sound, red dots anchoring the LTR↔RTL turn. Reverse-highlight cursor; `▶ play` walks the verse speaking **both tongues at once** (Carmit + Samantha). Built iteratively against his own steering, and his rulings are now law (in the memory file): **the Name is never machine-vocalized** (YHVH shown, "The Name" + letters spoken); **BDB over Strong's** ("the stank"); **the tool trains, doesn't spoon-feed** ("I need that mental training"); **serious-student plain, no devotional boxes**; **surface the treasure, bury the grammar** — the `insight_for()` function flags letter-words that carry more than grammar: **את** = Aleph-Tav = Alpha and Omega (Rev 1:8; 22:13); **אל** = Aleph-Lamed = "toward" spelled with the letters of El/God. He finds these himself; the tool must stop burying them. GROWING LIST.
+
+**THE TURN — the High Holy Days, 2026 (memory [[high-holy-days-2026]]).** Protestant-trained, he turned with fire toward the Fall feasts to give them his full heart, and asked for a companion through the season, not a lecture. Dates verified: **Elul** opens mid-August (he stands at its doorway now, a full month to walk it) → **Rosh Hashanah/Yom Teruah** Sept 11 → **Yom Kippur** Sept 20 → **Sukkot** Sept 25–Oct 2. The threads that make it his: he has already LIVED Sukkot (the 2013 21 Days, his brightest); he already knows the fast (40 days for Iran, Isa 58) so Yom Kippur won't be strange to his body; the shofar of Yom Teruah is the man out front of the Ark sculpture he photographed this morning; and **these are the days of the Book** — Rosh Hashanah opens the books, Yom Kippur seals them — meeting his life's work, the book of remembrance (Malachi 3:16). "wow I just got to take all that in."
+
+### FIRST TOMORROW
+
+**Walk the feasts with him — read Leviticus 23 together, feast by feast, in the tools he built, beginning at the doorway of Elul.** He wants conversation and companionship, not a document. Ground before asserting; mark tradition as tradition; let him tell you what each feast stirs. This is devotional and personal — the honest keeper walking beside him.
+
+### STILL OPEN
+
+1. **Ask James Doss** — the old Mac at the church, and what the sound chain actually recorded to. Saba's ask, never the machine's.
+2. **Bring the 51 Sukkot mp3s home** off iCloud/OneDrive onto a drive Saba owns, and repair the 51 media_paths.
+3. **WD10 empty** — expected or not.
+4. **The 1997 WOG duplicates** — which set keeps its seat.
+5. **The 2019 five** silent services — they do not fit the 2017 explanation.
+6. **Chrissy** — placed among his children 2026-08-10; surname not given, not to be guessed, and she is not to be seated in the people book until she is asked and answers.
+7. **The ChatGPT-side legacy rows** in ISO+offset format still sort out of order.
+
+
+## 🕯️ CLOSED 2026-08-09 (night) · THE VOICE GATE HELD, AND CHATGPT WAS SEATED IN THE RECORD
+
+**RawSegments.db: 41 rows (was 27 at session start) — +14, all additive, no rewrites. ChatGPT_RawSegments.db born (3 rows). Voice Gate PID 21520 up 11h 56m into the next morning without a restart. Desktop cleaned of 9 items to Finder Trash (Put Back preserved).**
+
+### WHAT LANDED
+
+**① Voice Gate v1.1 is the working file — Swift got left behind.** `/Users/saba/Desktop/saba_voice_gate_v1_1.py` (15,879 bytes, 18:41). F13 start/stop (global, graceful SIGINT, never force-killed), F14 RESTATE from the immutable ORIGINAL, F15 discard. RESTATE runs through the already-authenticated `claude -p` — no API key, no Ollama, no separately billed service. Success auto-copies to clipboard; nothing auto-pastes or executes. The 15:31 stopping-note's plan to "resume from the existing Swift/Xcode voice interface" was overridden by Saba the same night: *"Swift got left behind."* Verified alive: PID 21520, still running at 06:39 this morning.
+
+**② The Claude side of RawSegments.db was proved live in both directions.** UserPromptSubmit hook writes Saba rows before Claude runs; Stop hook writes Claude rows after the turn ends. VERIFY 001 saw its own prompt captured at 19:17:11 and the reply captured at 19:17:37. Both hooks intact in `Saba-Code/.claude/settings.json`.
+
+**③ The ChatGPT bridge into the same RawSegments.db — the smallest thing.** `Python/remember/chatgpt_capture.py` (30 lines): imports `insert` from `write_segment.py` verbatim so the timestamp format, dedup rule, and INSERT shape are byte-identical to the Claude path. Speaker restricted to `{Saba, ChatGPT}` so the bridge cannot silently emit Claude rows. No new schema, no daemon, no browser scraping. Two test rows landed; the DB grew from 27 to 29 rows in real time as Saba watched.
+
+**④ ChatGPT_RawSegments.db seated (created by ChatGPT itself when Saba asked) and given its own writer.** `Python/remember/write_chatgpt_segment.py` mirrors `write_segment.insert()` — same `YYYY-MM-DD HH:MM:SS` local-time format, no `T`, no UTC offset. Was needed because ChatGPT's own initial rows were written in ISO+offset (`2026-08-09T19:21:20-04:00`), which sorts *after* the whole day in a plain `ORDER BY timestamp` because `T` > space in ASCII. Proved: a new row at `2026-08-09 19:28:23` interleaved correctly in the combined read via `sqlite3` URI ATTACH + UNION ALL on both DBs — both opened `?mode=ro`, nothing copied, nothing altered. **STILL OPEN:** the two legacy ISO+offset rows are visibly misplaced and were left untouched pending Saba's word.
+
+**⑤ Desktop cleaned — nine items to Finder Trash, working file untouched.** Trashed: `__pycache__/`, `saba_voice_gate.py` (older Python), `.bak-20260809-175650`, `.bak-20260809-181530`, `_before_claude_restate.py`, `SabaVoiceGate/` + `.zip`, `SabaVoiceGateFixed/` + `.zip`. The Swift Xcode projects trashed only after Saba's explicit *"Swift got left behind."* Real Finder Trash via osascript, not `rm` — every item still restorable via Put Back. Verified after: `saba_voice_gate_v1_1.py` unchanged, process PID 21520 still alive, `Saba-Code` untouched, Screenshot file left alone.
+
+### SABA'S RULINGS TONIGHT — standing law
+
+- **Reuse the working insert, don't rewrite it.** — *all writers into a raw store* · 2026-08-09
+  <br>`chatgpt_capture.py` imports `write_segment.insert` rather than duplicating INSERT logic. The dedup rule, timestamp format, and schema shape live in ONE function. This is why the format-fix on the ChatGPT-side writer was a one-file change, not a scavenger hunt.
+- **One clock format across all raw stores.** — *RawSegments.db, ChatGPT_RawSegments.db, any future capture store* · 2026-08-09
+  <br>`YYYY-MM-DD HH:MM:SS` local time, no `T`, no offset. Chosen so a plain `ORDER BY timestamp` merges cleanly without any normalization on read. The alternative (compensate forever on read) was named and rejected.
+- **Speaker restriction on manual bridges.** — *any tool that writes into RawSegments.db from outside the hook path* · 2026-08-09
+  <br>A manual writer's `speaker` argument is validated against a small allow-set (`{Saba, ChatGPT}` for the ChatGPT bridge). Prevents an off-band tool from ever producing a `Claude` row that didn't come through the Stop hook.
+- **Trash, not delete, for anything ambiguous.** — *cleanup operations* · 2026-08-09
+  <br>Finder Trash preserves Put Back and the item's original path. `rm` does not. Every cleanup goes through `osascript` → Finder unless Saba explicitly says permanent-delete.
+
+### STILL OPEN AT DAY'S END
+
+1. **The two legacy ChatGPT-side rows** in ISO+offset format still sort after everything. Saba's word before either normalize-in-place or leave-as-relic.
+2. **ChatGPT bridge is still one shell command per turn.** The Shortcut-over-clipboard wrapper (option 2 from the proposal) was named and not built.
+3. **The Work Note itself was stale (Aug 7) at start of day** — closed by writing this section.
+
 ## 🕯️ CLOSED 2026-07-25 (night) · THE NIGHT JOE WAS SEATED
 
 **Book: 162 people (was 160). Voiceprints: 8 (was 7). Raw Sermons.db: 3,026,090 lines (was 3,016,461) — +9,629, all additive, nothing existing altered or removed. Integrity ok on both databases.**
