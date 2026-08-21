@@ -36,7 +36,7 @@ QUESTION_WORDS = {"who", "what", "when", "where", "why", "how", "tell", "find",
 DB_PATH = "/Users/saba/Archive/Sermons.db"
 SUGGESTIONS_DB = "/Users/saba/Archive/Archive_Suggestions.db"
 VIDEO_ROOT = "/Volumes/Data/Video Archive"
-PORT = 8765
+PORT = 8772
 HERE = os.path.dirname(os.path.abspath(__file__))
 MAX_HITS = 500
 
