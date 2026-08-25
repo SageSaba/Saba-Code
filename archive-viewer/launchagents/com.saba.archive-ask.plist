@@ -6,9 +6,9 @@
   <key>ProgramArguments</key>
   <array>
     <string>/Library/Frameworks/Python.framework/Versions/3.13/bin/python3</string>
-    <string>/Users/saba/Desktop/Archive Viewer/ask_archive.py</string>
+    <string>/Users/saba/Desktop/Saba-Code/Python/PY/ask_archive.py</string>
   </array>
-  <key>WorkingDirectory</key><string>/Users/saba/Desktop/Archive Viewer</string>
+  <key>WorkingDirectory</key><string>/Users/saba/Desktop/Saba-Code</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key><string>/Users/saba/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
