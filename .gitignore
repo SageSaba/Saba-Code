@@ -42,7 +42,10 @@ xcuserdata/
 *.xcuserstate
 
 # --- session and worktree scratch
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+!.claude/hooks/*
 
 # the exclusion ledger — never travels
 exclusions.json
