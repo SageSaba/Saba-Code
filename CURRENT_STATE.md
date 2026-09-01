@@ -17,14 +17,14 @@
   result to `archive-viewer/audit_log.db`. Tested in-sandbox against
   synthetic databases only — see "Blocked" below.
 
-### In progress / not yet done
-- Existing write scripts (`people_reference.py`, `build_organizations.py`,
-  and others that `sqlite3.connect` + `INSERT`/`UPDATE` directly into
-  `Archive_Suggestions.db`) still write directly — none have been routed
-  through the wrapper. These are one-off, Saba-run bulk rebuilds (drop +
-  reseed a whole table), not row-level AI-driven corrections, so it's an
-  open question whether the wrapper should govern them at all. Saba's
-  call — see the question raised in chat on 2026-09-01.
+### Decided (2026-09-01)
+- Scope of the wrapper: **AI-driven writes only.** The existing manual
+  bulk-rebuild scripts (`people_reference.py`, `build_organizations.py`,
+  `name_scanner.py`, etc.) keep writing directly to `Archive_Suggestions.db`
+  as they always have — they are Saba-run, one-off table reseeds, not
+  row-level corrections, and are out of scope for `archive_write_wrapper.py`.
+  The wrapper governs only writes Claude makes on Saba's behalf going
+  forward; no migration of those scripts is planned.
 
 ### Blocked
 - The "five-criterion proof" that `CLAUDE.md` requires before any write
@@ -47,11 +47,9 @@
 
 ### Next action
 1. Saba defines the five-criterion proof (what must be demonstrated on
-   the disposable test database before Sermons.db writes are ever enabled).
-2. Saba decides whether the existing manual bulk-rebuild scripts should
-   also be migrated to call the wrapper, or whether the wrapper is scoped
-   to future AI-driven corrections only.
-3. Once (1) is answered, wire the proof's checks into
-   `archive_write_wrapper.py` and re-test against the disposable database
-   at `/private/tmp/test_archive/` on the actual Mac (this sandbox can't
-   reach that path).
+   the disposable test database before Sermons.db writes are ever enabled)
+   — asked in chat 2026-09-01, answer pending.
+2. Once (1) is answered, wire the proof's checks into
+   `verify_five_criteria()` in `archive_write_wrapper.py` and re-test
+   against the disposable database at `/private/tmp/test_archive/` on the
+   actual Mac (this sandbox can't reach that path).
