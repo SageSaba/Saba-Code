@@ -6,7 +6,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/Library/Frameworks/Python.framework/Versions/3.13/bin/python3</string>
-    <string>/Users/saba/Desktop/Saba Code/archive-viewer/church_watcher.py</string>
+    <string>/Users/saba/Desktop/Saba-Code/Python/PY/church_watcher.py</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>

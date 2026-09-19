@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sukkot 2013 — 21 Days</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 0;
+            height: 100vh;
+        }
+
+        .sidebar {
+            background: #0f1419;
+            border-right: 1px solid #333;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .sessions-list {
+            list-style: none;
+        }
+
+        .session-item {
+            padding: 12px 10px;
+            margin: 4px 0;
+            background: #1a1a2e;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            font-size: 13px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .session-item:hover {
+            background: #252541;
+            border-left-color: #8a9dc9;
+        }
+
+        .session-item.active {
+            background: #2d3561;
+            border-left-color: #a8b8ff;
+            font-weight: 600;
+        }
+
+        .session-number {
+            display: block;
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .session-title {
+            display: block;
+            color: #c0c0c0;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            background: #16213e;
+        }
+
+        .player-bar {
+            background: #0f1419;
+            border-bottom: 1px solid #333;
+            padding: 15px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .scrub-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #2a2a4e;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .scrub-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8a9dc9 0%, #a8b8ff 100%);
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.05s linear;
+        }
+
+        .scrub-bar-handle {
+            position: absolute;
+            top: -6px;
+            left: 0%;
+            width: 20px;
+            height: 20px;
+            background: #a8b8ff;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            opacity: 0.7;
+            transition: opacity 0.1s;
+            box-shadow: 0 0 12px rgba(168, 184, 255, 0.7);
+        }
+
+        .scrub-bar-container:hover .scrub-bar-handle {
+            opacity: 1;
+        }
+
+        .player-bar button {
+            background: #8a9dc9;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #0f1419;
+            transition: background 0.2s;
+        }
+
+        .player-bar button:hover {
+            background: #a8b8ff;
+        }
+
+        .player-bar button:disabled {
+            background: #444;
+            cursor: not-allowed;
+            color: #888;
+        }
+
+        .session-title-display {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a8b8ff;
+            flex: 1;
+        }
+
+        .time-display {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .transcript-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .transcript-text {
+            max-width: 700px;
+            width: 100%;
+            line-height: 2;
+            font-size: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 300px;
+        }
+
+        .segment {
+            display: inline;
+            margin: 0;
+            padding: 0;
+        }
+
+        .segment .time {
+            display: none !important;
+        }
+
+        .segment .text {
+            color: #999;
+            word-spacing: 0.1em;
+        }
+
+        .segment .text::after {
+            content: ' ';
+        }
+
+        .segment.current .text {
+            color: #fff;
+            font-weight: 600;
+            background: rgba(168, 184, 255, 0.4);
+            padding: 0px 2px;
+            border-radius: 2px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #666;
+            text-align: center;
+        }
+
+        .empty-state h2 {
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        audio {
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <ul class="sessions-list" id="sessionsList"></ul>
+        </div>
+
+        <div class="main">
+            <div class="player-bar">
+                <div class="scrub-bar-container" id="scrubBar">
+                    <div class="scrub-bar-fill" id="scrubFill"></div>
+                    <div class="scrub-bar-handle" id="scrubHandle"></div>
+                </div>
+                <div class="controls-row">
+                    <button id="rewindBtn">⏮ -30s</button>
+                    <button id="playBtn">▶ Play</button>
+                    <button id="pauseBtn">⏸ Pause</button>
+                    <button id="ffBtn">+30s ⏭</button>
+                    <span class="session-title-display" id="currentSessionTitle">Select a session</span>
+                    <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+                </div>
+            </div>
+
+            <div class="transcript-container">
+                <div class="transcript-text" id="transcriptText">
+                    <div class="empty-state">
+                        <h2>Sukkot 2013 — 21 Days</h2>
+                        <p>Select a session to begin reading</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer"></audio>
+
+    <script>
+        const sessions = [
+            {id: 2586, title: "Father's Love"},
+            {id: 2587, title: "Twirl"},
+            {id: 2588, title: "Spiritual Children"},
+            {id: 2589, title: "God's Vision for Us"},
+            {id: 2590, title: "What Does God Do With Broken Dreams"},
+            {id: 2591, title: "Intentionality Intro"},
+            {id: 2592, title: "Baptized Into Him"},
+            {id: 2593, title: "Behold, Believe, Become"},
+            {id: 2594, title: "Without Pockets"},
+            {id: 2595, title: "Freedom From Coloring in the Lines 1"},
+            {id: 2596, title: "Into the Character Of 1"},
+            {id: 2597, title: "Bertend"},
+            {id: 2598, title: "The Way He Loves"},
+            {id: 2599, title: "Don't Go Negative"},
+            {id: 2600, title: "In Him We Have Our Being"},
+            {id: 2601, title: "Love For All People the Same"},
+            {id: 2602, title: "Shift to Declarant Prayer"},
+            {id: 2603, title: "Just As I Am"},
+            {id: 2604, title: "Diving Board"},
+            {id: 2605, title: "Be Attitude"},
+            {id: 2606, title: "Water to Wine"},
+            {id: 2607, title: "With the Accuracy of An Engineer"},
+            {id: 2608, title: "The Preface and the Introduction"},
+            {id: 2609, title: "Imago Dei (Image of God)"},
+            {id: 2610, title: "Salvation"},
+            {id: 2611, title: "Cooperative Brethren"},
+            {id: 2612, title: "Be As A Little Child"},
+            {id: 2613, title: "The Affirmations"},
+            {id: 2614, title: "Beyond the Open Door"},
+            {id: 2615, title: "Listening to Authority"},
+            {id: 2616, title: "Cease to Work It Out"},
+            {id: 2617, title: "Shabbat Conversation"},
+            {id: 2618, title: "Living Sacrifices"},
+            {id: 2619, title: "Shabbat Call"},
+            {id: 2620, title: "Spiritual Transfer"},
+            {id: 2621, title: "God Is Enough"},
+            {id: 2622, title: "All He Purposed For You"},
+            {id: 2623, title: "Ambassadors of His Love"},
+            {id: 2624, title: "Think On These Things"},
+            {id: 2625, title: "Faux Faith"},
+            {id: 2626, title: "Truth: Greek Philosophy vs. Hebrew Theology"},
+            {id: 2627, title: "Stretch Your Theology / Approbation in Burden Bearing"},
+            {id: 2628, title: "Approbation in Action"},
+            {id: 2629, title: "The Paralytic Man and the Approbation of His Friends"},
+            {id: 2630, title: "Only Jesus Can Ask You to Give All"},
+            {id: 2631, title: "Heritage of Obedience or Disobedience"},
+            {id: 2632, title: "You Can't Keep His Kingdom and Your Own"},
+            {id: 2633, title: "Don't Put Yourself at the Center of Revival"},
+            {id: 2634, title: "Life with Christ a lot More Wearable"},
+            {id: 2635, title: "Sukkot Review"},
+            {id: 2636, title: "Shabbath"}
+        ];
+
+        let currentSession = null;
+        let currentSegments = [];
+        let isPlaying = false;
+
+        const audio = document.getElementById('audioPlayer');
+        const sessionsList = document.getElementById('sessionsList');
+        const transcriptText = document.getElementById('transcriptText');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const currentSessionTitle = document.getElementById('currentSessionTitle');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const scrubBar = document.getElementById('scrubBar');
+        const scrubFill = document.getElementById('scrubFill');
+        const scrubHandle = document.getElementById('scrubHandle');
+        const rewindBtn = document.getElementById('rewindBtn');
+        const ffBtn = document.getElementById('ffBtn');
+
+        let isScrubbing = false;
+
+        // Build sessions list
+        sessions.forEach((session, idx) => {
+            const li = document.createElement('li');
+            li.className = 'session-item';
+            li.innerHTML = `<span class="session-number">Session ${idx + 1}</span><span class="session-title">${session.title}</span>`;
+            li.onclick = () => loadSession(session);
+            sessionsList.appendChild(li);
+        });
+
+        async function loadSession(session) {
+            currentSession = session;
+            currentSegments = [];
+
+            // Fetch transcript from transcript server on port 8768
+            try {
+                const response = await fetch(`http://localhost:8768/transcript/${session.id}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                currentSegments = await response.json();
+            } catch (err) {
+                console.error('Failed to load transcript:', err);
+                transcriptText.innerHTML = `<div class="empty-state"><h2>Error</h2><p>Could not load transcript. Is the transcript server running on port 8768?</p></div>`;
+                return;
+            }
+
+            currentSessionTitle.textContent = session.title;
+            audio.src = `http://localhost:8768/audio/${session.id}`;
+
+            // Render transcript
+            renderTranscript();
+
+            // Update active session in sidebar
+            document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
+            event.target.closest('.session-item')?.classList.add('active');
+
+            // Update time display
+            audio.onloadedmetadata = () => {
+                updateTimeDisplay();
+            };
+
+            audio.ontimeupdate = () => {
+                updateCurrentSegment();
+                updateTimeDisplay();
+            };
+        }
+
+        function renderTranscript() {
+            const html = currentSegments.map((seg, idx) => `
+                <div class="segment" data-index="${idx}" onclick="seekToSegment(${idx})">
+                    <span class="time">${seg.start} → ${seg.end}</span>
+                    <span class="text">${seg.text}</span>
+                </div>
+            `).join('');
+
+            transcriptText.innerHTML = html;
+        }
+
+        function updateCurrentSegment() {
+            const currentTime = audio.currentTime * 1000; // Convert to ms
+            const currentIdx = currentSegments.findIndex(seg => {
+                const [h, m, s] = seg.start.split(':');
+                const startMs = parseInt(h) * 3600000 + parseInt(m) * 60000 + parseFloat(s) * 1000;
+                const [h2, m2, s2] = seg.end.split(':');
+                const endMs = parseInt(h2) * 3600000 + parseInt(m2) * 60000 + parseFloat(s2) * 1000;
+                return currentTime >= startMs && currentTime < endMs;
+            });
+
+            document.querySelectorAll('.segment').forEach((el, idx) => {
+                el.classList.toggle('current', idx === currentIdx);
+                if (idx === currentIdx) {
+                    el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                }
+            });
+        }
+
+        function seekToSegment(idx) {
+            const seg = currentSegments[idx];
+            const [h, m, s] = seg.start.split(':');
+            const seconds = parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(s);
+            audio.currentTime = seconds;
+            if (isPlaying) audio.play();
+        }
+
+        function updateTimeDisplay() {
+            const current = formatTime(audio.currentTime);
+            const duration = formatTime(audio.duration || 0);
+            timeDisplay.textContent = `${current} / ${duration}`;
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        playBtn.onclick = () => {
+            if (currentSession) {
+                audio.play();
+                isPlaying = true;
+                playBtn.disabled = true;
+                pauseBtn.disabled = false;
+            }
+        };
+
+        pauseBtn.onclick = () => {
+            audio.pause();
+            isPlaying = false;
+            playBtn.disabled = false;
+            pauseBtn.disabled = true;
+        };
+
+        rewindBtn.onclick = () => {
+            audio.currentTime = Math.max(0, audio.currentTime - 30);
+            updateScrubBar();
+            updateCurrentSegment();
+            updateTimeDisplay();
+        };
+
+        ffBtn.onclick = () => {
+            audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 30);
+            updateScrubBar();
+            updateCurrentSegment();
+            updateTimeDisplay();
+        };
+
+        audio.onended = () => {
+            isPlaying = false;
+            playBtn.disabled = false;
+            pauseBtn.disabled = true;
+        };
+
+        // Scrub bar interaction
+        scrubBar.addEventListener('mousedown', (e) => {
+            isScrubbing = true;
+            seekToScrubPosition(e);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isScrubbing) return;
+            seekToScrubPosition(e);
+        });
+
+        document.addEventListener('mouseup', () => {
+            isScrubbing = false;
+        });
+
+        // Scroll on transcript to scrub through audio
+        const transcriptContainer = document.querySelector('.transcript-container');
+        transcriptContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const secondsPerScroll = 3; // Scroll distance = 3 seconds
+            const delta = e.deltaY > 0 ? secondsPerScroll : -secondsPerScroll;
+            audio.currentTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + delta));
+            updateScrubBar();
+            updateCurrentSegment();
+            updateTimeDisplay();
+        }, {passive: false});
+
+        function seekToScrubPosition(e) {
+            const rect = scrubBar.getBoundingClientRect();
+            const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const newTime = percent * (audio.duration || 0);
+            audio.currentTime = newTime;
+            updateScrubBar();
+        }
+
+        function updateScrubBar() {
+            if (!audio.duration) return;
+            const percent = (audio.currentTime / audio.duration) * 100;
+            scrubFill.style.width = percent + '%';
+            scrubHandle.style.left = percent + '%';
+        }
+
+        audio.addEventListener('timeupdate', updateScrubBar);
+    </script>
+</body>
+</html>

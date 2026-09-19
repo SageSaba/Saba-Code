@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sukkot 2013</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: #0a0a14;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top {
+            background: #0f1419;
+            border-bottom: 1px solid #333;
+            padding: 15px 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        select {
+            padding: 8px 12px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: #c0c0c0;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .play-pause {
+            padding: 6px 12px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: #c0c0c0;
+            font-size: 12px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .play-pause:hover {
+            background: #252541;
+            border-color: #8a9dc9;
+        }
+
+        .services {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 6px 12px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: #999;
+            font-size: 12px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #252541;
+            border-color: #8a9dc9;
+        }
+
+        button.active {
+            background: #2d3561;
+            border-color: #a8b8ff;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .reader {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .scrub {
+            position: absolute;
+            top: 60px;
+            left: 30px;
+            right: 30px;
+            height: 6px;
+            background: #2a2a4e;
+            border-radius: 3px;
+        }
+
+        .scrub-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8a9dc9, #a8b8ff);
+            width: 0%;
+            border-radius: 3px;
+        }
+
+        .text {
+            text-align: center;
+            line-height: 2.4;
+            font-size: 22px;
+            max-width: 800px;
+        }
+
+        .line {
+            height: 2.4em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        .line.active {
+            color: #fff;
+            background: rgba(168, 184, 255, 0.15);
+            border-radius: 4px;
+            padding: 0 20px;
+        }
+
+        .word {
+            display: inline;
+            padding: 2px 1px;
+        }
+
+        .word.now {
+            background: rgba(168, 184, 255, 0.6);
+            color: #fff;
+            border-radius: 2px;
+            padding: 4px 3px;
+        }
+
+        audio { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top">
+            <label>Day:</label>
+            <select id="dayPicker"></select>
+            <button class="play-pause" id="playPause">⏸ Pause</button>
+            <div class="services" id="services"></div>
+        </div>
+        <div class="scrub">
+            <div class="scrub-fill" id="scrubFill"></div>
+        </div>
+        <div class="reader">
+            <div class="text" id="text"></div>
+        </div>
+    </div>
+
+    <audio id="audio"></audio>
+
+    <script>
+        const days = [
+            [{id: 2586, t: "Father's Love"}, {id: 2587, t: "Twirl"}, {id: 2588, t: "Spiritual Children"}],
+            [{id: 2589, t: "God's Vision for Us"}, {id: 2590, t: "What Does God Do With Broken Dreams"}, {id: 2591, t: "Intentionality Intro"}],
+            [{id: 2592, t: "Baptized Into Him"}, {id: 2593, t: "Behold, Believe, Become"}, {id: 2594, t: "Without Pockets"}],
+            [{id: 2595, t: "Freedom From Coloring 1"}, {id: 2596, t: "Into the Character Of 1"}, {id: 2597, t: "Bertend"}],
+            [{id: 2598, t: "The Way He Loves"}, {id: 2599, t: "Don't Go Negative"}, {id: 2600, t: "In Him We Have Our Being"}],
+            [{id: 2601, t: "Love For All People"}, {id: 2602, t: "Shift to Declarant Prayer"}, {id: 2603, t: "Just As I Am"}],
+            [{id: 2604, t: "Diving Board"}, {id: 2636, t: "Shabbath"}, {id: 2605, t: "Be Attitude"}],
+            [{id: 2606, t: "Water to Wine"}, {id: 2607, t: "With the Accuracy of An Engineer"}, {id: 2608, t: "The Preface and the Introduction"}],
+            [{id: 2609, t: "Imago Dei"}, {id: 2610, t: "Salvation"}, {id: 2611, t: "Cooperative Brethren"}],
+            [{id: 2612, t: "Be As A Little Child"}, {id: 2613, t: "The Affirmations"}, {id: 2614, t: "Beyond the Open Door"}],
+            [{id: 2615, t: "Listening to Authority"}, {id: 2616, t: "Cease to Work It Out"}, {id: 2617, t: "Shabbat Conversation"}],
+            [{id: 2618, t: "Living Sacrifices"}, {id: 2619, t: "Shabbat Call"}, {id: 2620, t: "Spiritual Transfer"}],
+            [{id: 2621, t: "God Is Enough"}, {id: 2622, t: "All He Purposed For You"}, {id: 2623, t: "Ambassadors of His Love"}],
+            [{id: 2624, t: "Think On These Things"}, {id: 2625, t: "Faux Faith"}, {id: 2626, t: "Truth: Greek Philosophy vs. Hebrew"}],
+            [{id: 2627, t: "Stretch Your Theology"}, {id: 2628, t: "Approbation in Action"}, {id: 2629, t: "The Paralytic Man and the Approbation"}],
+            [{id: 2630, t: "Only Jesus Can Ask You to Give All"}, {id: 2631, t: "Heritage of Obedience"}, {id: 2632, t: "You Can't Keep His Kingdom"}],
+            [{id: 2633, t: "Don't Put Yourself at the Center"}, {id: 2634, t: "Life with Christ More Wearable"}, {id: 2635, t: "Sukkot Review"}]
+        ];
+
+        const dayPicker = document.getElementById('dayPicker');
+        const services = document.getElementById('services');
+        const text = document.getElementById('text');
+        const audio = document.getElementById('audio');
+        const scrubFill = document.getElementById('scrubFill');
+        const playPause = document.getElementById('playPause');
+
+        let words = [];
+        let currentIdx = 0;
+        let isPlaying = false;
+
+        // Build day dropdown
+        for (let i = 0; i < 21; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.text = `Day ${i + 1}`;
+            dayPicker.appendChild(opt);
+        }
+
+        dayPicker.onchange = () => {
+            const dayIdx = parseInt(dayPicker.value);
+            const dayServices = days[dayIdx];
+            services.innerHTML = '';
+            dayServices.forEach(s => {
+                const btn = document.createElement('button');
+                btn.textContent = s.t;
+                btn.onclick = () => load(s.id, btn);
+                services.appendChild(btn);
+            });
+        };
+
+        async function load(id, btn) {
+            try {
+                const res = await fetch(`http://localhost:8768/transcript/${id}`);
+                const segs = await res.json();
+
+                words = [];
+                segs.forEach(seg => {
+                    const ws = seg.text.split(/\s+/);
+                    const start = toMs(seg.start);
+                    const end = toMs(seg.end);
+                    const rate = ws.length / ((end - start) / 1000);
+                    ws.forEach((w, i) => {
+                        words.push({
+                            t: w,
+                            s: start + (i / rate) * 1000,
+                            e: start + ((i + 1) / rate) * 1000
+                        });
+                    });
+                });
+
+                audio.src = `http://localhost:8768/audio/${id}`;
+                document.querySelectorAll('button.active').forEach(b => {
+                    if (b !== playPause) b.classList.remove('active');
+                });
+                btn.classList.add('active');
+                currentIdx = 0;
+                isPlaying = true;
+                playPause.textContent = '⏸ Pause';
+                audio.play();
+            } catch (e) {
+                text.textContent = 'Error loading';
+            }
+        }
+
+        playPause.onclick = () => {
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                playPause.textContent = '▶ Play';
+            } else {
+                audio.play();
+                isPlaying = true;
+                playPause.textContent = '⏸ Pause';
+            }
+        };
+
+        audio.onplay = () => {
+            isPlaying = true;
+            playPause.textContent = '⏸ Pause';
+        };
+
+        audio.onpause = () => {
+            isPlaying = false;
+            playPause.textContent = '▶ Play';
+        };
+
+        function toMs(t) {
+            const [h, m, s] = t.split(':');
+            return parseInt(h) * 3600000 + parseInt(m) * 60000 + parseFloat(s) * 1000;
+        }
+
+        audio.ontimeupdate = () => {
+            const ms = audio.currentTime * 1000;
+            scrubFill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+
+            currentIdx = words.findIndex(w => w.s <= ms && ms < w.e);
+            if (currentIdx === -1) currentIdx = Math.max(0, words.findIndex(w => w.s > ms) - 1);
+
+            // Build 5 lines: 2 before, 1 center, 2 after
+            const wordsPerLine = 6;
+            const lines = [[], [], [], [], []];
+
+            for (let i = 0; i < 5; i++) {
+                const lineStartIdx = currentIdx - (2 - i) * wordsPerLine;
+                for (let j = 0; j < wordsPerLine; j++) {
+                    const wordIdx = lineStartIdx + j;
+                    if (wordIdx >= 0 && wordIdx < words.length) {
+                        lines[i].push({idx: wordIdx, w: words[wordIdx]});
+                    }
+                }
+            }
+
+            let html = '';
+            lines.forEach((line, lineNum) => {
+                if (line.length === 0) return;
+                const isCenter = lineNum === 2;
+                let lineHtml = `<div class="line${isCenter ? ' active' : ''}">`;
+                line.forEach(({idx, w}) => {
+                    const isCurrent = idx === currentIdx;
+                    lineHtml += `<span class="word${isCurrent ? ' now' : ''}">${w.t}</span> `;
+                });
+                lineHtml += '</div>';
+                html += lineHtml;
+            });
+            text.innerHTML = html;
+        };
+
+        // Load day 1
+        dayPicker.value = 0;
+        dayPicker.onchange();
+    </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+MEANING INDEX — FIRST PROOF, 2026-07-18
+1,022 summaries embedded (nomic-embed-text, local). Questions asked cold:
+
+Q: how am I saved by the blood of Jesus
+
+1. [0.825] 1992-06  RFOD  speaker unassigned  (service 901)
+   WOG June 1992 — Tape 3
+   Blood of Jesus
+
+2. [0.755] 2019-03-03  TRCF  speaker unassigned  (service 266)
+   Christ Fellowship
+   The pastor taught that the blood of Jesus serves as the password of praise to enter God's gates and receive His provision.
+
+3. [0.740] 2019-04-07  TRCF  speaker unassigned  (service 280)
+   Sunday 4.7.19
+   Pleading the blood of Jesus to resist spiritual opposition and find divine strength.
+
+4. [0.740] 2020-02-08  TRCF  speaker unassigned  (service 407)
+   Saturday 2.8.20
+   Hope Through Christ's Blood
+
+5. [0.738] 2019-03-03  TRCF  speaker unassigned  (service 266)
+   Christ Fellowship
+   Blood of Jesus: Password of Praise
+
+----------------------------------------
+Q: waiting on God in stillness
+
+1. [0.856] 2023-03-19  XWalls  speaker unassigned  (service 927)
+   Pastor Jerry Keller teaches on Waiting Upon God.
+   Waiting Upon God
+
+2. [0.852] 2019-03-17  TRCF  speaker unassigned  (service 271)
+   Christ Fellowship
+   Waiting on God
+
+3. [0.741] 2023-03-22  XWalls  speaker unassigned  (service 929)
+   This moment may be bigger than me
+   Spirit of Waiting
+
+4. [0.722] 2018-05-02  TRCF  speaker unassigned  (service 170)
+   Christ Fellowship
+   This sermon is about praying for God's active presence and protection while waiting on the Lord.
+
+5. [0.695] 2018-04-22  TRCF  speaker unassigned  (service 166)
+   Christ Fellowship
+   This sermon is about how waiting on God brings spiritual renewal and hope after discipline or hardship.
+
+----------------------------------------
+Q: forgiving someone who wronged you
+
+1. [0.706] 2018-11-04  TRCF  speaker unassigned  (service 227)
+   Christ Fellowship
+   Arise in Forgiveness
+
+2. [0.628] 2017-08-30  TRCF  speaker unassigned  (service 72)
+   Christ Fellowship
+   The sermon emphasizes that mercy triumphs over judgment, urging believers to forgive others as Jesus did rather than holding grudges.
+
+3. [0.621] 2019-02-24  TRCF  speaker unassigned  (service 263)
+   Christ Fellowship
+   This sermon emphasizes that forgiving others through Jesus enables their restoration and prevents them from being excluded from the church community.
+
+4. [0.619] 2019-01-18  TRCF  speaker unassigned  (service 246)
+   Christ Fellowship
+   Sacrifice and Gratitude
+
+5. [0.618] 2019-09-14  TRCF  speaker unassigned  (service 353)
+   September Soaking. Sat pm.
+   Regret and God's Providence
+
+----------------------------------------
+Q: Joe Nance mission trips to Russia and Cuba
+
+1. [0.673] 2017-01-25  TRCF  speaker unassigned  (service 14)
+   Christ Fellowship
+   Cuba Mission Hope
+
+2. [0.650] 2014-02-27  XWalls  speaker unassigned  (service 920)
+   Mas Cerca- Cuba 2014 Promo
+   Cuba Worship Trip Announcement
+
+3. [0.649] 2016-12-03  TRCF  Thomas Young  (service 9)
+   Christ Fellowship
+   25th-anniversary night: tributes, mission stories, and Joe Nance's exhortation and blessing.
+
+4. [0.628] 2017-08-13  TRCF  Joe Nance  (service 65)
+   Christ Fellowship
+   Joe Nance preaches — welcomed as guest, an hour and a half message.
+
+5. [0.623] 2017-01-25  TRCF  speaker unassigned  (service 14)
+   Christ Fellowship
+   The church service concluded with a commitment to a mission in Cuba focused on providing humanitarian aid and theological training to address the severe poverty
+
+----------------------------------------
+Q: speaking things into existence by faith
+
+1. [0.744] 2017-07-16  TRCF  speaker unassigned  (service 61)
+   Christ Fellowship
+   Word of God Speaks
+
+2. [0.709] 2019-01-06  TRCF  speaker unassigned  (service 243)
+   Christ Fellowship
+   This sermon emphasizes that faith operates in the present moment as the certainty of God's presence, not future hope.
+
+3. [0.705] 2017-05-13  TRCF  speaker unassigned  (service 44)
+   Christ Fellowship
+   Healing Through Faith
+
+4. [0.698] 2019-09-01  TRCF  speaker unassigned  (service 346)
+   Sunday 9.1.19
+   Pastor Thomas taught that believers are eternal beings and should step into eternity with God.
+
+5. [0.696] 2019-01-05  TRCF  speaker unassigned  (service 242)
+   Christ Fellowship
+   This sermon emphasizes that faith is necessary to please God, as one must believe in His existence and reward to come to Him.
+
+----------------------------------------
+Q: the prophet Elijah and the ravens
+
+1. [0.754] 2016-09-07  TRCF  speaker unassigned  (service 651)
+   Elijah, calling down fire
+   The message: Elijah's road through famine, ravens, and Carmel — experiences before usefulness.
+
+2. [0.722] 2016-09-07  TRCF  speaker unassigned  (service 651)
+   Elijah, calling down fire
+   Elijah as spiritual superman — the experiences God uses to build a fearless servant.
+
+3. [0.632] 2016-09-04  TRCF  speaker unassigned  (service 2)
+   Sunday AM
+   The service centered on freedom in Christ, using the biblical story of Elijah and the widow to demonstrate God's provision and liberation from sin.
+
+4. [0.627] 2016-09-07  TRCF  speaker unassigned  (service 651)
+   Elijah, calling down fire
+   The service emphasized Jesus' invitation for weary sinners to return home, using the biblical story of Elijah as a key illustration of faith and divine calling.
+
+5. [0.603] 2019-04-26  TRCF  speaker unassigned  (service 287)
+   4.26.19 Pastor James Wright
+   Anointing of Pastor Wright
+
+----------------------------------------
+Q: communion and the Lord's table
+
+1. [0.687] 2019-11-17  TRCF  speaker unassigned  (service 375)
+   Christ Fellowship
+   Resurrection and the Wedding Supper
+
+2. [0.675] 2019-11-17  TRCF  speaker unassigned  (service 375)
+   Christ Fellowship
+   The church service focused on the resurrection of Jesus and the invitation to the wedding supper of the Lamb, emphasizing humility and the call to participate i
+
+3. [0.670] 2018-03-25  TRCF  speaker unassigned  (service 156)
+   Christ Fellowship
+   Christ Fellowship held a service featuring a showing of the film "Case for Christ" followed by communion.
+
+4. [0.661] 2017-12-06  TRCF  speaker unassigned  (service 111)
+   Christ Fellowship
+   The sermon explains how Jesus, as the living bread, replaces the prohibition of eating in the Garden of Eden to become present in daily life through communion.
+
+5. [0.638] 2017-05-28  TRCF  speaker unassigned  (service 48)
+   Christ Fellowship
+   This sermon is about regaining church intimacy through sharing each other's pains.
+
+----------------------------------------
+
+PASSAGE-LEVEL PROOF — exact moments with clocks, 2026-07-18
+52,312 passages from 633,742 raw lines across 720 services.
+
+Q: how am I saved by the blood of Jesus
+
+1. [0.813] 2017-10-04  TRCF  speaker unassigned @ 00:05:29.300  (service 86)
+   Christ Fellowship
+   with another, and the blood of Jesus would continually cleanse us from all sin. Lord, I'm grateful that the blood works toward the enemy. It shuts him up. When
+
+2. [0.803] 2020-07-05  TRCF  speaker unassigned @ 00:00:00.129  (service 477)
+   07052020 Sunday AM
+   Nothing but the blood of Jesus. It's nothing, nothing but the blood. Nothing but the blood, nothing but the blood of Jesus. You gave us all with mercy and forgi
+
+3. [0.802] 2020-07-05  TRCF  speaker unassigned @ 00:00:00.107  (service 477)
+   07052020 Sunday AM
+   Now God and man united once again. There's power in the blood of Jesus. >> Praise the Lord. Glory. >> There's power in the blood for all the world to see. His h
+
+4. [0.802] 2017-02-11  TRCF  speaker unassigned @ 00:22:16.560  (service 18)
+   Christ Fellowship
+   those areas and receive it now i don't care if you've been saved for 43 years or 43 minutes or you're not saved right now i'd like for us all right now say jesu
+
+----------------------------------------
+Q: do not be afraid, God is with you
+
+1. [0.793] 2020-03-18  TRCF  speaker unassigned @ 00:00:00.275  (service 425)
+   Wednesday 2020-03-18
+   And when you have a worried thought, if you speak the Word of God, it will stop that thought and change directions every time. You can't be in fear and be conne
+
+2. [0.774] 2021-01-16  TRCF  speaker unassigned @ 00:00:00.464  (service 570)
+   Time of Waiting, Saturday Night, 1.16.21
+   Those who fear the Lord, we need to speak each other and to do what we are doing now. Hey, let's come. Let's come. Join us in praying. Let's wait upon the Lord.
+
+3. [0.773] 2018-05-20  TRCF  speaker unassigned @ 01:13:38.000  (service 176)
+   Christ Fellowship
+   ♪ I wanna stay close to you ♪ ♪ My whole life long ♪ ♪ There's no fear in love ♪ ♪ There's no fear in love ♪ - Just thank you, Lord. Such an amazing God. We wor
+
+4. [0.772] 2020-12-16  TRCF  speaker unassigned @ 00:00:01.008  (service 556)
+   2020 12 16 Wednesday pm
+   ♪ Oh ♪ ♪ When fear comes knocking ♪ ♪ There you'll be my guard ♪ ♪ When day breeds trouble ♪ ♪ There you'll hold my heart ♪ ♪ Come storm or battle ♪ ♪ God I kno
+
+----------------------------------------
+Q: waiting on God in stillness
+
+1. [0.770] 2023-03-19  XWalls  speaker unassigned @ 00:45:43.849  (service 927)
+   Pastor Jerry Keller teaches on Waiting Upon God.
+   and you're waiting has to go with you and you're waiting has to go with you down the highway down the highway down the highway and back home and back home and b
+
+2. [0.748] 2021-07-10  TRCF  speaker unassigned @ 00:00:00.730  (service 647)
+   Saturday Night Waiting 7.10.21
+   for me. Place in my hands the wonderful key that shall unclasp and set me free. Silently now, I wait for thee. Ready my God, thy will to see. Open my eyes, illu
+
+3. [0.744] 2023-03-19  XWalls  speaker unassigned @ 00:39:04.970  (service 927)
+   Pastor Jerry Keller teaches on Waiting Upon God.
+   that he waits silently for the Salvation that he waits silently for the Salvation of the Lord of the Lord of the Lord Micah 7 7 therefore I will look to the Mic
+
+4. [0.737] 2021-01-30  TRCF  speaker unassigned @ 00:00:01.732  (service 576)
+   Waiting Saturday Night 1.30.21
+   He's in the waiting. When we wait, God's there. The whole process begins when Jesus says to us, set the time aside, sanctify it and wait with me. And so he's in
+
+----------------------------------------
+Q: there is power in the name of Jesus
+
+1. [0.845] 2018-04-22  TRCF  speaker unassigned @ 00:15:21.000  (service 166)
+   Christ Fellowship
+   That nothing can stand against What a powerful name it is The name of Jesus What a powerful name it is The name of Jesus What a powerful name it is The name of
+
+2. [0.839] 2018-02-24  TRCF  speaker unassigned @ 00:13:25.160  (service 142)
+   Christ Fellowship
+   every chain. Oh, there's power in the name. Oh, Jesus, Jesus, there's power in his name. That every knee should bow, every tongue confess the name of Jesus. At
+
+3. [0.827] 2018-02-24  TRCF  speaker unassigned @ 00:10:59.160  (service 142)
+   Christ Fellowship
+   Oh, there is power in the name of Jesus. Oh, there is power in the name of Jesus. Yes, there is power in the name of Jesus. Oh, to break every chain, break ever
+
+4. [0.820] 2018-02-24  TRCF  speaker unassigned @ 00:09:41.160  (service 142)
+   Christ Fellowship
+   you glory and honor in a world that dishonors you, that ignores you. Lord, may we come and may you find a place where you can rest your head tonight, Jesus. Oh,
+
+----------------------------------------

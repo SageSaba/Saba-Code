@@ -50,3 +50,15 @@ xcuserdata/
 # the exclusion ledger — never travels
 exclusions.json
 *exclusions*.json
+
+# private/personal, not for the public repo
+Belvue Farms LLC (Young Lot).pdf
+X Photos/
+PDF Files/JRR Tolkien - Lord of the Rings Collection.pdf
+PDF Files/The Man Who Tapped the Secrets of the Universe (Clark, Glenn) (z-lib.org).pdf
+
+# local hook config, machine-specific
+.claude/settings.local.json
+
+# --- over GitHub's 100MB cap; split parts are tracked instead, this is the source
+Izzy's data/Church/TEAM Sermon by Pastor Joe.pdf
